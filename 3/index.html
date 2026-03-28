@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Matematyczne Jajka v3.0</title>
+    <style>
+        body { background: #eef2f3; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; margin: 0; padding: 10px; overflow: hidden; touch-action: none; }
+        canvas { background: white; border: 4px solid #2c3e50; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 100%; height: auto; cursor: crosshair; }
+        h1 { color: #2c3e50; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Matematyczne Jajka v3.0</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let punkty = 0, poprawne = 0, bledne = 0;
+        let koszykX = 400, jajkaY = -50, predkosc = 3;
+        let graAktywna = false, graStartowana = false, wybranyTryb = "losowo";
+        let zadanie = "", poprawnyWynik = 0, opcje = [];
+
+        // Przyciski menu
+        const przyciski = [
+            { id: "dodawanie", txt: "Dodawanie (+)", y: 180 },
+            { id: "odejmowanie", txt: "Odejmowanie (-)", y: 240 },
+            { id: "mnożenie", txt: "Mnożenie (*)", y: 300 },
+            { id: "dzielenie", txt: "Dzielenie (:)", y: 360 },
+            { id: "losowo", txt: "Losowo (Wszystko)", y: 420 }
+        ];
+
+        function generujZadanie() {
+            let tryb = wybranyTryb;
+            if (tryb === "losowo") {
+                const mozliwosci = ["dodawanie", "odejmowanie", "mnożenie", "dzielenie"];
+                tryb = mozliwosci[Math.floor(Math.random() * 4)];
+            }
+
+            let a, b, wynik, symbol;
+
+            if (tryb === "dodawanie") {
+                a = Math.floor(Math.random() * 30) + 1;
+                b = Math.floor(Math.random() * 30) + 1;
+                wynik = a + b; symbol = "+";
+            } else if (tryb === "odejmowanie") {
+                a = Math.floor(Math.random() * 40) + 10;
+                b = Math.floor(Math.random() * a) + 1;
+                wynik = a - b; symbol = "-";
+            } else if (tryb === "mnożenie") {
+                a = Math.floor(Math.random() * 8) + 2;
+                b = Math.floor(Math.random() * 9) + 1;
+                wynik = a * b; symbol = "*";
+            } else if (tryb === "dzielenie") {
+                wynik = Math.floor(Math.random() * 9) + 1; // wynik to mała liczba
+                b = Math.floor(Math.random() * 8) + 2;     // dzielnik
+                a = wynik * b;                             // liczba dzielona
+                symbol = ":";
+            }
+
+            zadanie = `${a} ${symbol} ${b} = ?`;
+            poprawnyWynik = wynik;
+            opcje = [wynik];
+            while(opcje.length < 3) {
+                let falsz = wynik + (Math.floor(Math.random() * 11) - 5);
+                if (!opcje.includes(falsz) && falsz !== wynik && falsz >= 0) opcje.push(falsz);
+            }
+            opcje.sort(() => Math.random() - 0.5);
+        }
+
+        function sterowanie(e) {
+            const rect = canvas.getBoundingClientRect();
+            let cX = (e.clientX || (e.touches ? e.touches[0].clientX : 0));
+            koszykX = (cX - rect.left) * (800 / rect.width);
+        }
+        canvas.addEventListener("mousemove", sterowanie);
+        canvas.addEventListener("touchmove", (e) => { e.preventDefault(); sterowanie(e); }, {passive: false});
+
+        canvas.addEventListener("mousedown", (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mX = (e.clientX - rect.left) * (800 / rect.width);
+            const mY = (e.clientY - rect.top) * (600 / rect.height);
+
+            if (!graStartowana) {
+                przyciski.forEach(btn => {
+                    if (mX > 250 && mX < 550 && mY > btn.y && mY < btn.y + 40) {
+                        wybranyTryb = btn.id;
+                        graStartowana = true; graAktywna = true; generujZadanie();
+                    }
+                });
+            } else if (!graAktywna) {
+                punkty = 0; poprawne = 0; bledne = 0; predkosc = 3; jajkaY = -50;
+                graStartowana = false; // Powrót do menu wyboru
+            }
+        });
+
+        function update() {
+            if (!graAktywna) return;
+            jajkaY += predkosc;
+            if (jajkaY > 520 && jajkaY < 580) {
+                for (let i = 0; i < 3; i++) {
+                    if (Math.abs(koszykX - (i + 1) * 200) < 60) {
+                        if (opcje[i] === poprawnyWynik) { punkty++; poprawne++; predkosc += 0.15; }
+                        else { punkty--; bledne++; }
+                        jajkaY = -50; generujZadanie(); break;
+                    }
+                }
+            }
+            if (jajkaY > 600) { bledne++; punkty--; jajkaY = -50; generujZadanie(); }
+            if (punkty >= 10 || punkty <= -5) graAktywna = false;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, 800, 600);
+            if (!graStartowana) {
+                ctx.fillStyle = "#2c3e50"; ctx.font = "bold 35px Arial";
+                ctx.fillText("Wybierz rodzaj równania:", 200, 100);
+                przyciski.forEach(btn => {
+                    ctx.fillStyle = "#3498db"; ctx.fillRect(250, btn.y, 300, 40);
+                    ctx.fillStyle = "white"; ctx.font = "20px Arial";
+                    ctx.fillText(btn.txt, 270, btn.y + 28);
+                });
+            } else if (graAktywna) {
+                ctx.fillStyle = "#333"; ctx.font = "bold 50px Arial"; ctx.fillText(zadanie, 300, 100);
+                ctx.font = "20px Arial"; ctx.fillText(`Wynik: ${punkty}/10 | Dobrze: ${poprawne} | Źle: ${bledne}`, 20, 40);
+                opcje.forEach((val, i) => {
+                    let x = (i + 1) * 200;
+                    ctx.fillStyle = "#3498db"; ctx.beginPath(); ctx.ellipse(x, jajkaY, 30, 40, 0, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial"; ctx.fillText(val, x - 15, jajkaY + 10);
+                });
+                ctx.fillStyle = "#27ae60"; ctx.fillRect(koszykX - 60, 560, 120, 20);
+            } else {
+                ctx.fillStyle = punkty >= 10 ? "#27ae60" : "#c0392b"; ctx.font = "bold 50px Arial";
+                ctx.fillText(punkty >= 10 ? "ZWYCIĘSTWO!" : "KONIEC GRY", 220, 250);
+                ctx.fillStyle = "black"; ctx.font = "25px Arial";
+                ctx.fillText(`Poprawne: ${poprawne} | Kliknij, aby wrócić do menu`, 200, 320);
+            }
+            requestAnimationFrame(draw);
+        }
+        setInterval(update, 1000/60); draw();
+    </script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Matematyczne Jajka v4.0 - Poziomy Wieku</title>
+    <style>
+        body { background: #f4f7f6; display: flex; flex-direction: column; align-items: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 10px; overflow: hidden; touch-action: none; }
+        canvas { background: white; border: 5px solid #34495e; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); max-width: 100%; height: auto; cursor: crosshair; }
+        h1 { color: #2c3e50; margin: 10px 0; font-size: 1.8rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <h1>Matematyczne Jajka v4.0</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // --- ZMIENNE STANU GRY ---
+        let punkty = 0, poprawne = 0, bledne = 0;
+        let koszykX = 400, jajkaY = -50, predkosc = 3;
+        let menuEtap = "wiek"; // "wiek", "operacja", "gra"
+        let wybranyWiek = 10, wybranyTryb = "losowo";
+        let zadanie = "", poprawnyWynik = 0, opcje = [];
+
+        // --- KONFIGURACJA PRZYCISKÓW ---
+        const przyciskiWiek = [
+            { id: 6, txt: "Poziom: 6 lat (Podstawy)", y: 180, color: "#2ecc71" },
+            { id: 10, txt: "Poziom: 10 lat (Szkoła)", y: 250, color: "#3498db" },
+            { id: 14, txt: "Poziom: 14 lat (Egzamin)", y: 320, color: "#f1c40f" },
+            { id: 99, txt: "Poziom: Dorosły (Wyzwanie)", y: 390, color: "#e74c3c" }
+        ];
+
+        let przyciskiOperacja = []; // Generowane dynamicznie w zależności od wieku
+
+        // --- LOGIKA GENEROWANIA ZADAŃ (TRUDNOŚĆ) ---
+        function generujZadanie() {
+            let tryb = wybranyTryb;
+            if (tryb === "losowo") {
+                let mozliwosci = ["dodawanie", "odejmowanie"];
+                if (wybranyWiek >= 10) mozliwosci.push("mnożenie", "dzielenie");
+                tryb = mozliwosci[Math.floor(Math.random() * mozliwosci.length)];
+            }
+
+            let a, b, wynik, symbol;
+            const w = wybranyWiek;
+
+            if (tryb === "dodawanie") {
+                symbol = "+";
+                if (w == 6) { a = r(1, 15); b = r(1, 20-a); } // do 20
+                else if (w == 10) { a = r(10, 70); b = r(10, 99-a); } // do 100
+                else if (w == 14) { a = r(50, 300); b = r(50, 500-a); } // do 500
+                else { a = r(100, 700); b = r(100, 1000-a); } // do 1000
+                wynik = a + b;
+            } else if (tryb === "odejmowanie") {
+                symbol = "-";
+                if (w == 6) { a = r(10, 20); b = r(1, a-5); } // proste, wynik > 5
+                else if (w == 10) { a = r(30, 100); b = r(10, a-10); } // do 100
+                else if (w == 14) { a = r(100, 500); b = r(50, a-50); } // do 500
+                else { a = r(300, 1000); b = r(100, a-100); } // do 1000
+                wynik = a - b;
+            } else if (tryb === "mnożenie") {
+                symbol = "*";
+                if (w == 10) { a = r(2, 10); b = r(2, 10); } // tabliczka do 100
+                else if (w == 14) { a = r(5, 20); b = r(3, 20); } // do 400
+                else { a = r(10, 35); b = r(5, 30); } // do 1050
+                wynik = a * b;
+            } else if (tryb === "dzielenie") {
+                symbol = ":";
+                if (w == 10) { wynik = r(2, 10); b = r(2, 10); a = wynik * b; } // tabliczka
+                else if (w == 14) { wynik = r(5, 20); b = r(3, 15); a = wynik * b; } // do 300
+                else { wynik = r(10, 40); b = r(5, 25); a = wynik * b; } // do 1000
+                wynik = a / b;
+            }
+
+            zadanie = `${a} ${symbol} ${b} = ?`;
+            poprawnyWynik = wynik;
+            opcje = [wynik];
+            // Generowanie unikalnych, bliskich fałszywych odpowiedzi
+            let offset = (w == 6) ? 3 : (w == 10 ? 8 : 15); 
+            while(opcje.length < 3) {
+                let falsz = wynik + (r(1, offset*2) - offset);
+                if (!opcje.includes(falsz) && falsz !== wynik && falsz >= 0) opcje.push(falsz);
+            }
+            opcje.sort(() => Math.random() - 0.5);
+        }
+
+        function r(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+        // --- STEROWANIE ---
+        function sterowanie(e) {
+            if (menuEtap !== "gra") return;
+            const rect = canvas.getBoundingClientRect();
+            let cX = (e.clientX || (e.touches ? e.touches[0].clientX : 0));
+            koszykX = (cX - rect.left) * (800 / rect.width);
+        }
+        canvas.addEventListener("mousemove", sterowanie);
+        canvas.addEventListener("touchmove", (e) => { if(menuEtap == "gra") e.preventDefault(); sterowanie(e); }, {passive: false});
+
+        canvas.addEventListener("mousedown", (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mX = (e.clientX - rect.left) * (800 / rect.width);
+            const mY = (e.clientY - rect.top) * (600 / rect.height);
+
+            if (menuEtap === "wiek") {
+                przyciskiWiek.forEach(btn => {
+                    if (mX > 200 && mX < 600 && mY > btn.y && mY < btn.y + 50) {
+                        wybranyWiek = btn.id;
+                        ustawPrzyciskOperacji();
+                        menuEtap = "operacja";
+                    }
+                });
+            } else if (menuEtap === "operacja") {
+                // Przycisk POWRÓT
+                if (mX > 20 && mX < 120 && mY > 20 && mY < 60) { menuEtap = "wiek"; return; }
+                
+                przyciskiOperacja.forEach(btn => {
+                    if (mX > 250 && mX < 550 && mY > btn.y && mY < btn.y + 40) {
+                        wybranyTryb = btn.id;
+                        punkty = 0; poprawne = 0; bledne = 0; predkosc = 3; jajkaY = -50;
+                        generujZadanie(); menuEtap = "gra";
+                    }
+                });
+            } else if (menuEtap === "koniec") {
+                menuEtap = "wiek"; // Powrót do samego początku
+            }
+        });
+
+        function ustawPrzyciskOperacji() {
+            let y = 200;
+            przyciskiOperacja = [
+                { id: "dodawanie", txt: "Dodawanie (+)", y: y },
+                { id: "odejmowanie", txt: "Odejmowanie (-)", y: y += 60 }
+            ];
+            if (wybranyWiek >= 10) {
+                przyciskiOperacja.push({ id: "mnożenie", txt: "Mnożenie (*)", y: y += 60 });
+                przyciskiOperacja.push({ id: "dzielenie", txt: "Dzielenie (:)", y: y += 60 });
+            }
+            przyciskiOperacja.push({ id: "losowo", txt: "Losowo (Wszystko)", y: y += 60 });
+        }
+
+        // --- AKTUALIZACJA I RYSOWANIE ---
+        function update() {
+            if (menuEtap !== "gra") return;
+            jajkaY += predkosc;
+            // Kolizja
+            if (jajkaY > 510 && jajkaY < 570) {
+                for (let i = 0; i < 3; i++) {
+                    if (Math.abs(koszykX - (i + 1) * 200) < 70) {
+                        if (opcje[i] === poprawnyWynik) { punkty++; poprawne++; predkosc += 0.15; }
+                        else { punkty--; bledne++; }
+                        jajkaY = -50; generujZadanie(); break;
+                    }
+                }
+            }
+            if (jajkaY > 600) { bledne++; punkty--; jajkaY = -50; generujZadanie(); }
+            if (punkty >= 10 || punkty <= -5) menuEtap = "koniec";
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, 800, 600);
+            
+            if (menuEtap === "wiek") {
+                drawMenuTitle("Wybierz swój wiek (poziom):");
+                przyciskiWiek.forEach(btn => drawButton(btn.txt, 200, btn.y, 400, 50, btn.color));
+
+            } else if (menuEtap === "operacja") {
+                drawMenuTitle(`Poziom ${wybranyWiek==99?'Dorosły':wybranyWiek+' lat'}. Wybierz działanie:`);
+                drawButton("<- Powrót", 20, 20, 100, 40, "#7f8c8d", 16);
+                przyciskiOperacja.forEach(btn => drawButton(btn.txt, 250, btn.y, 300, 40, "#34495e"));
+
+            } else if (menuEtap === "gra") {
+                ctx.fillStyle = "#333"; ctx.font = "bold 55px 'Segoe UI'"; 
+                ctx.fillText(zadanie, 400 - ctx.measureText(zadanie).width/2, 110);
+                
+                ctx.font = "bold 22px Arial"; ctx.fillStyle = "#2c3e50";
+                ctx.fillText(`Wynik: ${punkty}/10 | Dobrze: ${poprawne} | Źle: ${bledne}`, 20, 40);
+                
+                // Rysowanie Jajek
+                opcje.forEach((val, i) => {
+                    let x = (i + 1) * 200;
+                    // Cień
+                    ctx.fillStyle = "rgba(0,0,0,0.15)"; ctx.beginPath(); ctx.ellipse(x+4, jajkaY+4, 35, 45, 0, 0, Math.PI * 2); ctx.fill();
+                    // Jajko
+                    ctx.fillStyle = "#3498db"; ctx.beginPath(); ctx.ellipse(x, jajkaY, 35, 45, 0, 0, Math.PI * 2); ctx.fill();
+                    // Liczba
+                    ctx.fillStyle = "white"; ctx.font = "bold 28px Arial"; 
+                    ctx.fillText(val, x - ctx.measureText(val).width/2, jajkaY + 10);
+                });
+                // Koszyk
+                ctx.fillStyle = "#27ae60"; ctx.

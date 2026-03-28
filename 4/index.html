@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Matematyczne Jajka v4.0 - Poziomy Wieku</title>
+    <title>Matematyczne Jajka v4.1 - Naprawione Menu</title>
     <style>
         body { background: #f4f7f6; display: flex; flex-direction: column; align-items: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 10px; overflow: hidden; touch-action: none; }
         canvas { background: white; border: 5px solid #34495e; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); max-width: 100%; height: auto; cursor: crosshair; }
@@ -11,7 +11,7 @@
     </style>
 </head>
 <body>
-    <h1>Matematyczne Jajka v4.0</h1>
+    <h1>Matematyczne Jajka v4.1</h1>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 
     <script>
@@ -21,7 +21,7 @@
         // --- ZMIENNE STANU GRY ---
         let punkty = 0, poprawne = 0, bledne = 0;
         let koszykX = 400, jajkaY = -50, predkosc = 3;
-        let menuEtap = "wiek"; // "wiek", "operacja", "gra"
+        let menuEtap = "wiek"; // "wiek", "operacja", "gra", "koniec"
         let wybranyWiek = 10, wybranyTryb = "losowo";
         let zadanie = "", poprawnyWynik = 0, opcje = [];
 
@@ -33,7 +33,7 @@
             { id: 99, txt: "Poziom: Dorosły (Wyzwanie)", y: 390, color: "#e74c3c" }
         ];
 
-        let przyciskiOperacja = []; // Generowane dynamicznie w zależności od wieku
+        let przyciskiOperacja = []; // Generowane dynamicznie
 
         // --- LOGIKA GENEROWANIA ZADAŃ (TRUDNOŚĆ) ---
         function generujZadanie() {
@@ -78,7 +78,6 @@
             zadanie = `${a} ${symbol} ${b} = ?`;
             poprawnyWynik = wynik;
             opcje = [wynik];
-            // Generowanie unikalnych, bliskich fałszywych odpowiedzi
             let offset = (w == 6) ? 3 : (w == 10 ? 8 : 15); 
             while(opcje.length < 3) {
                 let falsz = wynik + (r(1, offset*2) - offset);
@@ -119,8 +118,8 @@
                 przyciskiOperacja.forEach(btn => {
                     if (mX > 250 && mX < 550 && mY > btn.y && mY < btn.y + 40) {
                         wybranyTryb = btn.id;
-                        punkty = 0; poprawne = 0; bledne = 0; predkosc = 3; jajkaY = -50;
-                        generujZadanie(); menuEtap = "gra";
+                        resetGry();
+                        menuEtap = "gra";
                     }
                 });
             } else if (menuEtap === "koniec") {
@@ -128,8 +127,13 @@
             }
         });
 
+        function resetGry() {
+            punkty = 0; poprawne = 0; bledne = 0; predkosc = 3; jajkaY = -50;
+            generujZadanie();
+        }
+
         function ustawPrzyciskOperacji() {
-            let y = 200;
+            let y = 180;
             przyciskiOperacja = [
                 { id: "dodawanie", txt: "Dodawanie (+)", y: y },
                 { id: "odejmowanie", txt: "Odejmowanie (-)", y: y += 60 }
@@ -145,7 +149,6 @@
         function update() {
             if (menuEtap !== "gra") return;
             jajkaY += predkosc;
-            // Kolizja
             if (jajkaY > 510 && jajkaY < 570) {
                 for (let i = 0; i < 3; i++) {
                     if (Math.abs(koszykX - (i + 1) * 200) < 70) {
@@ -167,8 +170,9 @@
                 przyciskiWiek.forEach(btn => drawButton(btn.txt, 200, btn.y, 400, 50, btn.color));
 
             } else if (menuEtap === "operacja") {
-                drawMenuTitle(`Poziom ${wybranyWiek==99?'Dorosły':wybranyWiek+' lat'}. Wybierz działanie:`);
-                drawButton("<- Powrót", 20, 20, 100, 40, "#7f8c8d", 16);
+                let wiekTxt = wybranyWiek==99 ? 'Dorosły' : wybranyWiek+' lat';
+                drawMenuTitle(`Poziom: ${wiekTxt}. Wybierz działanie:`);
+                drawButton("<- Powrót", 20, 20, 120, 40, "#7f8c8d", 18);
                 przyciskiOperacja.forEach(btn => drawButton(btn.txt, 250, btn.y, 300, 40, "#34495e"));
 
             } else if (menuEtap === "gra") {
@@ -178,16 +182,53 @@
                 ctx.font = "bold 22px Arial"; ctx.fillStyle = "#2c3e50";
                 ctx.fillText(`Wynik: ${punkty}/10 | Dobrze: ${poprawne} | Źle: ${bledne}`, 20, 40);
                 
-                // Rysowanie Jajek
                 opcje.forEach((val, i) => {
                     let x = (i + 1) * 200;
-                    // Cień
                     ctx.fillStyle = "rgba(0,0,0,0.15)"; ctx.beginPath(); ctx.ellipse(x+4, jajkaY+4, 35, 45, 0, 0, Math.PI * 2); ctx.fill();
-                    // Jajko
                     ctx.fillStyle = "#3498db"; ctx.beginPath(); ctx.ellipse(x, jajkaY, 35, 45, 0, 0, Math.PI * 2); ctx.fill();
-                    // Liczba
                     ctx.fillStyle = "white"; ctx.font = "bold 28px Arial"; 
                     ctx.fillText(val, x - ctx.measureText(val).width/2, jajkaY + 10);
                 });
-                // Koszyk
-                ctx.fillStyle = "#27ae60"; ctx.
+                ctx.fillStyle = "#27ae60"; ctx.beginPath();
+                ctx.roundRect(koszykX - 70, 550, 140, 25, 10); ctx.fill(); 
+                ctx.lineWidth = 3; ctx.strokeStyle = "#1e8449"; ctx.stroke();
+
+            } else if (menuEtap === "koniec") {
+                const wygrana = punkty >= 10;
+                ctx.fillStyle = wygrana ? "#27ae60" : "#c0392b"; ctx.font = "bold 60px 'Segoe UI'";
+                let txt = wygrana ? "ZWYCIĘSTWO!" : "KONIEC GRY";
+                ctx.fillText(txt, 400 - ctx.measureText(txt).width/2, 250);
+                ctx.fillStyle = "#333"; ctx.font = "28px Arial";
+                ctx.fillText(`Poprawne odpowiedzi: ${poprawne} | Kliknij, aby wrócić do menu`, 160, 330);
+            }
+            requestAnimationFrame(draw);
+        }
+
+        function drawMenuTitle(txt) {
+            ctx.fillStyle = "#2c3e50"; ctx.font = "bold 32px 'Segoe UI'";
+            ctx.fillText(txt, 400 - ctx.measureText(txt).width/2, 100);
+        }
+
+        function drawButton(txt, x, y, w, h, color, fontSize = 22) {
+            ctx.fillStyle = color; ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill();
+            ctx.fillStyle = "rgba(0,0,0,0.15)"; ctx.beginPath(); ctx.roundRect(x, y+h-4, w, 4, {bl: 8, br: 8}); ctx.fill();
+            ctx.fillStyle = "white"; ctx.font = `bold ${fontSize}px Arial`;
+            ctx.fillText(txt, x + w/2 - ctx.measureText(txt).width/2, y + h/2 + 7);
+        }
+
+        // Polyfill dla roundRect
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+                if (typeof r === 'number') r = {tl: r, tr: r, bl: r, br: r};
+                if (w < 2 * r.tl) r.tl = w / 2; if (h < 2 * r.tl) r.tl = h / 2;
+                this.beginPath(); this.moveTo(x + r.tl, y);
+                this.arcTo(x + w, y, x + w, y + h, r.tr); this.arcTo(x + w, y + h, x, y + h, r.br);
+                this.arcTo(x, y + h, x, y, r.bl); this.arcTo(x, y, x + w, y, r.tl);
+                this.closePath(); return this;
+            }
+        }
+
+        setInterval(update, 1000/60); draw();
+    </script>
+</body>
+</html>

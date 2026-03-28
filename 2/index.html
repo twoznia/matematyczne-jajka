@@ -3,136 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Matematyczne Jajka - GitHub Edition</title>
+    <title>Matematyczne Jajka v2.0</title>
     <style>
-        body { background: #f0f0f0; display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif; margin: 0; padding: 10px; overflow: hidden; }
-        canvas { background: white; border: 3px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.2); max-width: 100%; height: auto; cursor: none; }
-        h1 { color: #333; font-size: 1.5rem; margin-bottom: 5px; }
+        body { 
+            background: #eef2f3; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 10px; 
+            overflow: hidden; 
+            touch-action: none;
+        }
+        canvas { 
+            background: white; 
+            border: 4px solid #2c3e50; 
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            max-width: 100%; 
+            height: auto; 
+            cursor: none; 
+        }
+        h1 { color: #2c3e50; margin-bottom: 10px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        .stats-bar { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
     </style>
 </head>
 <body>
-    <h1>Łapanie Jajek: Wyzwanie Matematyczne</h1>
+    <h1>Matematyczne Jajka v2.0</h1>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // Zmienne gry
+        // --- ZMIENNE GRY ---
         let punkty = 0, poprawne = 0, bledne = 0;
-        let koszykX = 400, jajkaY = 0, predkosc = 3;
-        let graAktywna = false; // Gra zaczyna się po kliknięciu
-        let zadanie = "", poprawnyWynik = 0, opcje = [];
-        let instrukcjaCzas = 2000; // Czas wyświetlania instrukcji (ms)
+        let koszykX = 400, jajkaY = -50, predkosc = 3;
+        let graAktywna = false; 
         let graStartowana = false;
+        let zadanie = "", poprawnyWynik = 0, opcje = [];
 
+        // --- LOGIKA MATEMATYCZNA ---
         function generujZadanie() {
             const operacje = ['+', '-', '*'];
             const op = operacje[Math.floor(Math.random() * 3)];
             let a, b, wynik;
 
-            if (op === '+') { a = Math.floor(Math.random() * 20) + 1; b = Math.floor(Math.random() * 20) + 1; wynik = a + b; }
-            else if (op === '-') { a = Math.floor(Math.random() * 20) + 10; b = Math.floor(Math.random() * a) + 1; wynik = a - b; }
-            else { a = Math.floor(Math.random() * 8) + 2; b = Math.floor(Math.random() * 8) + 2; wynik = a * b; }
+            if (op === '+') { 
+                a = Math.floor(Math.random() * 20) + 1; 
+                b = Math.floor(Math.random() * 20) + 1; 
+                wynik = a + b; 
+            } else if (op === '-') { 
+                a = Math.floor(Math.random() * 20) + 10; 
+                b = Math.floor(Math.random() * a) + 1; 
+                wynik = a - b; 
+            } else { 
+                a = Math.floor(Math.random() * 8) + 2; 
+                b = Math.floor(Math.random() * 8) + 2; 
+                wynik = a * b; 
+            }
 
-            zadanie = `${a} {op} ${b} = ?`;
+            // POPRAWIONE: ${op} zamiast {op}
+            zadanie = `${a} ${op} ${b} = ?`; 
             poprawnyWynik = wynik;
-            opcje = [wynik, wynik + Math.floor(Math.random() * 5) + 1, wynik - Math.floor(Math.random() * 5) - 1];
+
+            // Tworzenie 3 opcji (1 dobra, 2 błędne)
+            opcje = [wynik];
+            while(opcje.length < 3) {
+                let falszywy = wynik + (Math.floor(Math.random() * 11) - 5);
+                if (!opcje.includes(falszywy) && falszywy !== wynik) {
+                    opcje.push(falszywy);
+                }
+            }
             opcje.sort(() => Math.random() - 0.5);
         }
 
-        function mouseHandler(e) {
+        // --- STEROWANIE ---
+        function sterowanie(e) {
             const rect = canvas.getBoundingClientRect();
-            koszykX = (e.clientX || e.touches[0].clientX) - rect.left;
-            // Przeskaluj pozycję myszy, jeśli canvas jest przeskalowany
-            koszykX *= canvas.width / rect.width;
+            let clientX = e.clientX;
+            if (e.touches) clientX = e.touches[0].clientX;
+            
+            koszykX = (clientX - rect.left) * (canvas.width / rect.width);
         }
 
-        canvas.addEventListener("mousemove", mouseHandler);
-        canvas.addEventListener("touchmove", mouseHandler); // Obsługa dotyku (przesuwanie)
+        canvas.addEventListener("mousemove", sterowanie);
+        canvas.addEventListener("touchmove", (e) => { e.preventDefault(); sterowanie(e); }, {passive: false});
 
-        // Kliknięcie, aby rozpocząć lub zagrać ponownie
-        canvas.addEventListener("mousedown", startGameOrRestart);
-        canvas.addEventListener("touchstart", startGameOrRestart);
-
-        function startGameOrRestart() {
+        function klikniecie() {
             if (!graStartowana) {
                 graStartowana = true;
                 graAktywna = true;
                 generujZadanie();
-                return;
-            }
-            if (!graAktywna) {
-                punkty = 0; poprawne = 0; bledne = 0; predkosc = 3; graAktywna = true; generujZadanie();
+            } else if (!graAktywna) {
+                // Reset gry
+                punkty = 0; poprawne = 0; bledne = 0; predkosc = 3; jajkaY = -50;
+                graAktywna = true;
+                generujZadanie();
             }
         }
 
+        canvas.addEventListener("mousedown", klikniecie);
+        canvas.addEventListener("touchstart", klikniecie);
+
+        // --- AKTUALIZACJA I RYSOWANIE ---
         function update() {
             if (!graAktywna) return;
 
             jajkaY += predkosc;
-            if (jajkaY > 600) { bledne++; punkty--; jajkaY = 0; generujZadanie(); }
 
-            // Sprawdzanie kolizji (z jajkiem lub dotknięcie jajka)
-            for (let i = 0; i < 3; i++) {
-                let xPos = (i + 1) * 200;
-                if (jajkaY > 530 && jajkaY < 570 && Math.abs(koszykX - xPos) < 60) {
-                    if (opcje[i] === poprawnyWynik) { punkty++; poprawne++; predkosc += 0.2; }
-                    else { punkty--; bledne++; }
-                    jajkaY = 0; generujZadanie();
+            // Sprawdzanie kolizji
+            if (jajkaY > 520 && jajkaY < 580) {
+                for (let i = 0; i < 3; i++) {
+                    let xPos = (i + 1) * 200;
+                    if (Math.abs(koszykX - xPos) < 60) {
+                        if (opcje[i] === poprawnyWynik) {
+                            punkty++; poprawne++; predkosc += 0.15;
+                        } else {
+                            punkty--; bledne++;
+                        }
+                        jajkaY = -50;
+                        generujZadanie();
+                        break;
+                    }
                 }
             }
 
-            if (punkty >= 5 || punkty <= -5) graAktywna = false;
+            // Jajka spadły na ziemię
+            if (jajkaY > 600) {
+                bledne++; punkty--; jajkaY = -50;
+                generujZadanie();
+            }
+
+            // Warunki końca
+            if (punkty >= 5 || punkty <= -5) {
+                graAktywna = false;
+            }
         }
 
         function draw() {
             ctx.clearRect(0, 0, 800, 600);
 
             if (!graStartowana) {
-                // Ekran startowy z instrukcją
-                ctx.fillStyle = "black"; ctx.font = "30px Arial";
-                ctx.fillText("Matematyczne Jajka", 260, 200);
+                // EKRAN POWITALNY
+                ctx.fillStyle = "#2c3e50";
+                ctx.font = "bold 40px Arial";
+                ctx.fillText("Matematyczne Jajka v2.0", 180, 200);
                 
-                ctx.font = "20px Arial";
-                ctx.fillText("📱 Na TELEFONIE: Dotknij lub kliknij jajko pod poprawną odpowiedzią.", 50, 280);
-                ctx.fillText("💻 Na PC: Ruszaj myszką, aby łapać poprawne jajko koszykiem.", 50, 320);
+                ctx.font = "22px Arial";
+                ctx.fillStyle = "#34495e";
+                ctx.fillText("💻 PC: Ruszaj myszką, by łapać poprawne wyniki", 160, 280);
+                ctx.fillText("📱 Telefon: Klikaj/Dotykaj pod spadającym jajkiem", 160, 320);
                 
-                ctx.fillStyle = "blue"; ctx.font = "bold 25px Arial";
-                ctx.fillText("Kliknij lub Dotknij, aby ZACZĄĆ", 200, 420);
+                ctx.fillStyle = "#27ae60";
+                ctx.font = "bold 28px Arial";
+                ctx.fillText("DOTKNIJ EKRANU, ABY ZACZĄĆ", 200, 420);
 
             } else if (graAktywna) {
-                // Gra aktywna
-                // Zadanie i punkty
-                ctx.fillStyle = "black"; ctx.font = "40px Arial";
-                ctx.fillText(zadanie, 330, 80);
-                ctx.font = "20px Arial";
-                ctx.fillText(`Punkty: ${punkty} | Dobrze: ${poprawne} | Źle: ${bledne}`, 20, 30);
+                // INTERFEJS GRY
+                ctx.fillStyle = "#333";
+                ctx.font = "bold 50px Arial";
+                ctx.fillText(zadanie, 300, 100);
 
-                // Jajka
+                ctx.font = "24px Arial";
+                ctx.fillText(`Wynik: ${punkty} | Dobrze: ${poprawne} | Źle: ${bledne}`, 20, 40);
+
+                // JAJKA
                 opcje.forEach((val, i) => {
-                    ctx.fillStyle = "blue";
-                    ctx.beginPath(); ctx.ellipse((i + 1) * 200, jajkaY, 30, 40, 0, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = "white"; ctx.font = "25px Arial";
-                    ctx.fillText(val, (i + 1) * 200 - 15, jajkaY + 10);
+                    let x = (i + 1) * 200;
+                    // Cień jajka
+                    ctx.fillStyle = "rgba(0,0,0,0.1)";
+                    ctx.beginPath(); ctx.ellipse(x+3, jajkaY+3, 30, 40, 0, 0, Math.PI * 2); ctx.fill();
+                    // Jajko
+                    ctx.fillStyle = "#3498db";
+                    ctx.beginPath(); ctx.ellipse(x, jajkaY, 30, 40, 0, 0, Math.PI * 2); ctx.fill();
+                    // Liczba
+                    ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
+                    ctx.fillText(val, x - (ctx.measureText(val).width / 2), jajkaY + 10);
                 });
 
-                // Koszyk
-                ctx.fillStyle = "green";
-                ctx.fillRect(koszykX - 50, 560, 100, 20);
+                // KOSZYK
+                ctx.fillStyle = "#27ae60";
+                ctx.fillRect(koszykX - 60, 560, 120, 25);
+                ctx.strokeStyle = "#1e8449"; ctx.lineWidth = 3;
+                ctx.strokeRect(koszykX - 60, 560, 120, 25);
+
             } else {
-                // Ekran końca gry
-                ctx.fillStyle = punkty >= 5 ? "green" : "red";
-                ctx.font = "60px Arial";
-                ctx.fillText(punkty >= 5 ? "ZWYCIĘSTWO!" : "PRZEGRANA!", 200, 250);
-                ctx.fillStyle = "black"; ctx.font = "30px Arial";
-                ctx.fillText(`Wynik: ${poprawne} poprawnych. Kliknij, by zagrać ponownie`, 130, 320);
+                // EKRAN KOŃCOWY
+                const wygrana = punkty >= 5;
+                ctx.fillStyle = wygrana ? "#27ae60" : "#c0392b";
+                ctx.font = "bold 60px Arial";
+                ctx.fillText(wygrana ? "ZWYCIĘSTWO!" : "PRZEGRANA!", 180, 250);
+                
+                ctx.fillStyle = "#2c3e50"; ctx.font = "28px Arial";
+                ctx.fillText(`Poprawne odpowiedzi: ${poprawne}`, 240, 320);
+                ctx.fillText(`Błędne odpowiedzi: ${bledne}`, 240, 360);
+                
+                ctx.font = "bold 22px Arial";
+                ctx.fillText("KLIKNIJ, ABY ZAGRAĆ PONOWNIE", 220, 450);
             }
             requestAnimationFrame(draw);
         }
 
+        setInterval(update, 1000/60);
         draw();
-        setInterval(update, 1000/60); // 60 klatek na sekundę
     </script>
 </body>
 </html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matematyczna Przygoda</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <div id="menu">
+            <h1>🌟 Matematyczna Wyspa 🌟</h1>
+            <p>Wybierz największą liczbę:</p>
+            <div class="difficulty-options">
+                <button onclick="startGame(10)">Do 10</button>
+                <button onclick="startGame(20)">Do 20</button>
+                <button onclick="startGame(50)">Do 50</button>
+            </div>
+        </div>
+
+        <div id="game" class="hidden">
+            <div class="stats">Gwiazdki: <span id="score">0</span> ⭐</div>
+            <div id="question-box">
+                <span id="num1">0</span>
+                <span id="operator">+</span>
+                <span id="num2">0</span>
+                <span>=</span>
+                <span id="answer">?</span>
+            </div>
+            <div id="options-container"></div>
+            <button id="back-btn" onclick="showMenu()">⬅ Powrót</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

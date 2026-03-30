@@ -1,0 +1,61 @@
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 100%);
+    font-family: 'Comic Neue', cursive;
+    overflow: hidden;
+}
+
+#game-container {
+    background: white;
+    padding: 30px;
+    border-radius: 30px;
+    box-shadow: 0 10px 0 #badc58;
+    text-align: center;
+    width: 90%;
+    max-width: 500px;
+}
+
+h1 { color: #ff6b6b; font-size: 2.5rem; }
+
+button {
+    background: #4cd137;
+    border: none;
+    padding: 15px 25px;
+    margin: 10px;
+    border-radius: 15px;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 5px 0 #44bd32;
+}
+
+button:active { transform: translateY(5px); box-shadow: none; }
+
+.hidden { display: none; }
+
+#question-box {
+    font-size: 4rem;
+    margin: 20px 0;
+    color: #2f3640;
+}
+
+#options-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.option-btn {
+    background: #00a8ff;
+    box-shadow: 0 5px 0 #0097e6;
+}
+
+.stats { font-size: 1.5rem; color: #fbc531; margin-bottom: 10px; }
+
+#back-btn { background: #95afc0; font-size: 1rem; box-shadow: 0 3px 0 #535c68; }

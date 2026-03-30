@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrigQuest: Rozszerzenie 4LO</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary: #4ecca3;
+            --secondary: #e94560;
+            --bg: #1a1a2e;
+            --card: #16213e;
+            --text: #eeeeee;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        #game-container {
+            max-width: 700px;
+            width: 90%;
+            background: var(--card);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .hp-container, .xp-container {
+            width: 100%;
+            height: 12px;
+            background: #0f3460;
+            border-radius: 6px;
+            margin: 5px 0 15px 0;
+            overflow: hidden;
+        }
+
+        #hp-fill { width: 100%; height: 100%; background: var(--secondary); transition: 0.5s; }
+        #xp-fill { width: 0%; height: 100%; background: var(--primary); transition: 0.5s; }
+
+        .math-box {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 1.5em;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        input {
+            padding: 12px;
+            width: 50%;
+            border-radius: 8px;
+            border: 2px solid #0f3460;
+            background: #1a1a2e;
+            color: white;
+            font-size: 1em;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--primary); }
+
+        button {
+            padding: 12px 25px;
+            background: var(--primary);
+            color: #1a1a2e;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+        #feedback { height: 20px; margin-top: 15px; font-weight: bold; }
+        
+        .level-badge {
+            background: var(--primary);
+            color: var(--bg);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="stats-header">
+        <span>POZIOM: <span id="lvl-display" class="level-badge">1</span></span>
+        <span>XP: <span id="xp-text">0</span> / 100</span>
+    </div>
+    <div class="xp-container"><div id="xp-fill"></div></div>
+
+    <h2 id="boss-name">👹 Strażnik Jedynki Trygonometrycznej</h2>
+    <div class="hp-container"><div id="hp-fill"></div></div>
+    <p style="font-size: 0.8em; margin-top: -10px;">HP Przeciwnika: <span id="hp-text">100</span>%</p>
+
+    <div class="math-box" id="question-box">
+        \[ \sin\left(\frac{\pi}{6}\right) = ? \]
+    </div>
+
+    <div id="input-area">
+        <input type="text" id="answer" placeholder="Wpisz wynik (np. 0.5 lub -1)" autofocus>
+        <button onclick="handleAction()">ATAKUJ</button>
+    </div>
+
+    <p id="feedback"></p>
+    <p id="hint-text" style="font-size: 0.85em; color: #888; margin-top: 20px;"></p>
+</div>
+
+<script>
+    const database = [
+        { q: "\\sin\\left(\\frac{\\pi}{6}\\right)", a: "0.5", h: "30 stopni to połowa jednostki." },
+        { q: "\\cos(120^\\circ)", a: "-0.5", h: "II ćwiartka, cosinus jest ujemny." },
+        { q: "\\text{tg}(225^\\circ)", a: "1", h: "III ćwiartka, tangens dodatni (180+45)." },
+        { q: "\\sin^2(15^\\circ) + \\cos^2(15^\\circ)", a: "1", h: "Pamiętasz jedynkę trygonometryczną?" },
+        { q: "\\text{Ile rozwiązań ma } \\sin(x)=0 \\text{ w } \\langle 0, 2\\pi \\rangle?", a: "3", h: "0, π oraz 2π." },
+        { q: "\\cos\\left(\\frac{3\\pi}{2}\\right)", a: "0", h: "Punkt na dole koła jednostkowego." },
+        { q: "\\text{Uprość: } \\sin(2x) / \\cos(x)", a: "2sin(x)", h: "Wzór na sinus podwojonego kąta: 2sin(x)cos(x)." },
+        { q: "\\cos^2(x) - \\sin^2(x) \\text{ dla } x=15^\\circ", a: "0.866", h: "To cos(2x), czyli cos(30 stopni) = √3/2." },
+        { q: "\\text{Okres podstawowy } \\text{tg}(x)", a: "pi", h: "Tangens powtarza się co pół obrotu." },
+        { q: "\\sin(x) \\text{ gdy } \\cos(x)=0.8, x \\in (0, \\pi/2)", a: "0.6", h: "Trójkąt egipski 3-4-5." }
+    ];
+
+    let currentLvl = 1;
+    let xp = 0;
+    let bossHp = 100;
+    let qIndex = 0;
+
+    function handleAction() {
+        const inputField = document.getElementById('answer');
+        const userVal = inputField.value.trim().toLowerCase().replace(',', '.');
+        const feedback = document.getElementById('feedback');
+        const currentQ = database[qIndex];
+
+        // Logika sprawdzania (tolerancja dla pierwiastków)
+        let isCorrect = (userVal === currentQ.a.toLowerCase());
+        if (!isCorrect && !isNaN(parseFloat(userVal))) {
+            isCorrect = Math.abs(parseFloat(userVal) - parseFloat(currentQ.a)) < 0.02;
+        }
+
+        if (isCorrect) {
+            gainXP(25);
+            bossHp -= 20;
+            feedback.style.color = "var(--primary)";
+            feedback.innerText = "TRAFIENIE! +25 XP";
+            qIndex = (qIndex + 1) % database.length;
+            nextQuestion();
+        } else {
+            feedback.style.color = "var(--secondary)";
+            feedback.innerText = "PUDŁO!";
+            document.getElementById('hint-text').innerText = "Podpowiedź: " + currentQ.h;
+        }
+
+        inputField.value = "";
+        updateUI();
+    }
+
+    function gainXP(amount) {
+        xp += amount;
+        if (xp >= 100) {
+            xp = 0;
+            currentLvl++;
+            alert("AWANS! Poziom " + currentLvl + " osiągnięty!");
+        }
+    }
+
+    function nextQuestion() {
+        const qBox = document.getElementById('question-box');
+        qBox.innerHTML = `\\[ ${database[qIndex].q} = ? \\]`;
+        document.getElementById('hint-text').innerText = "";
+        // Ponowne renderowanie MathJax
+        MathJax.typeset();
+    }
+
+    function updateUI() {
+        document.getElementById('hp-fill').style.width = bossHp + "%";
+        document.getElementById('hp-text').innerText = Math.max(0, bossHp);
+        document.getElementById('xp-fill').style.width = xp + "%";
+        document.getElementById('xp-text').innerText = xp;
+        document.getElementById('lvl-display').innerText = currentLvl;
+
+        if (bossHp <= 0) {
+            document.getElementById('game-container').innerHTML = `
+                <h1 style="color: var(--primary)">🏆 POKONAŁEŚ STRAŻNIKA!</h1>
+                <p>Twój poziom końcowy: ${currentLvl}</p>
+                <button onclick="location.reload()">Zagraj ponownie</button>
+            `;
+        }
+    }
+
+    // Obsługa klawisza Enter
+    document.getElementById('answer').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') handleAction();
+    });
+</script>
+
+</body>
+</html>

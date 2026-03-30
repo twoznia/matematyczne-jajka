@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubieranka dla 6-latka</title>
+    <style>
+        :root {
+            --bg-color: #f0f9ff;
+            --panel-color: #ffffff;
+            --accent-color: #ff6b6b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        h1 { color: #444; margin: 10px; font-size: 1.5rem; }
+
+        .game-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Panel wyboru postaci */
+        .char-select {
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 20px;
+            border: none;
+            background: var(--accent-color);
+            color: white;
+            transition: transform 0.2s;
+        }
+        button:active { transform: scale(0.95); }
+
+        /* Szafa z ubraniami */
+        .wardrobe {
+            width: 250px;
+            background: var(--panel-color);
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .clothing-item {
+            font-size: 3rem;
+            background: #eee;
+            border-radius: 10px;
+            text-align: center;
+            cursor: grab;
+            padding: 10px;
+            transition: background 0.3s;
+        }
+        .clothing-item:hover { background: #e0e0e0; }
+
+        /* Postać */
+        .doll-container {
+            position: relative;
+            width: 300px;
+            height: 500px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .base-char { font-size: 10rem; position: relative; z-index: 1; }
+
+        /* Slot na ubrania na postaci */
+        .slot {
+            position: absolute;
+            width: 120px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            z-index: 2;
+            pointer-events: none; /* Klikamy przez ubranie na postać */
+        }
+
+        #slot-head { top: 60px; }
+        #slot-torso { top: 160px; }
+        #slot-legs { top: 260px; }
+        #slot-feet { top: 380px; }
+
+        .drop-zone {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0; left: 0;
+            z-index: 0;
+        }
+
+        .instruction {
+            margin-top: 10px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Ubierz swoją postać! 👗👕</h1>
+
+    <div class="char-select">
+        <button onclick="changeChar('👧')">Dziewczynka</button>
+        <button onclick="changeChar('👦')" style="background: #4dadff;">Chłopiec</button>
+    </div>
+
+    <div class="game-container">
+        <div class="wardrobe">
+            <div class="clothing-item" draggable="true" ondragstart="drag(event)" id="hat1" data-type="head">🧢</div>
+            <div class="clothing-item" draggable="true" ondragstart="drag(event)" id="hat2" data-type="head">👒</div>
+            <div class="clothing-item" draggable="true" ondragstart="drag(event)" id="top1" data-type="torso">👕</div>
+            <div class="clothing-item" draggable="true" ondragstart="drag(event)" id="top2" data-type="torso">🧥</div>
+            <div class="clothing-item" draggable="true" ondragstart="drag(event)" id="top3" data-type="torso">👚</div>
+            <div class="clothing-item" draggable="true" ondragstart="drag(event)" id="leg1" data-type="legs">👖</div>
+            <div class="clothing-item" draggable="true" ondragstart="drag(event)" id="leg2" data-type="legs">👗</div>
+            <div class="clothing-item" draggable="true" ondragstart="drag(event)" id="shoe1" data-type="feet">👟</div>
+            <div class="clothing-item" draggable="true" ondragstart="drag(event)" id="shoe2" data-type="feet">👞</div>
+            <div class="clothing-item" draggable="true" ondragstart="drag(event)" id="shoe3" data-type="feet">👠</div>
+        </div>
+
+        <div class="doll-container" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <div id="char-avatar" class="base-char">👧</div>
+            
+            <div id="slot-head" class="slot"></div>
+            <div id="slot-torso" class="slot"></div>
+            <div id="slot-legs" class="slot"></div>
+            <div id="slot-feet" class="slot"></div>
+        </div>
+    </div>
+
+    <p class="instruction">Przeciągnij ubranko na postać!</p>
+    <button onclick="reset()">Zdejmij wszystko</button>
+
+    <script>
+        function changeChar(gender) {
+            document.getElementById('char-avatar').innerText = gender;
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            ev.dataTransfer.setData("type", ev.target.getAttribute('data-type'));
+            ev.dataTransfer.setData("emoji", ev.target.innerText);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const type = ev.dataTransfer.getData("type");
+            const emoji = ev.dataTransfer.getData("emoji");
+            
+            // Znajdź odpowiedni slot na podstawie typu ubrania
+            const slot = document.getElementById('slot-' + type);
+            if (slot) {
+                slot.innerText = emoji;
+                // Mały efekt dźwiękowy (opcjonalnie wizualny)
+                slot.style.transform = "scale(1.2)";
+                setTimeout(() => slot.style.transform = "scale(1)", 200);
+            }
+        }
+
+        function reset() {
+            const slots = document.querySelectorAll('.slot');
+            slots.forEach(slot => slot.innerText = '');
+        }
+
+        // Wsparcie dla dotyku (tablety/telefony)
+        document.querySelectorAll('.clothing-item').forEach(item => {
+            item.addEventListener('touchstart', function(e) {
+                // Prosta symulacja dla urządzeń mobilnych - kliknięcie ubiera
+                const type = this.getAttribute('data-type');
+                const emoji = this.innerText;
+                document.getElementById('slot-' + type).innerText = emoji;
+            });
+        });
+    </script>
+</body>
+</html>

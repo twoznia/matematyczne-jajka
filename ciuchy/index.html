@@ -3,121 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=none">
-    <title>Wesoła Ubieranka</title>
+    <title>Super Ubieranka</title>
     <style>
         :root {
-            --bg-color: #e0f7fa;
+            --bg-color: #fdf2f8;
             --panel-color: #ffffff;
             --boy-skin: #ffdbac;
             --girl-skin: #f1c27d;
+            --hair-color: #4b2c20;
         }
 
         body {
             font-family: 'Comic Sans MS', cursive, sans-serif;
             background-color: var(--bg-color);
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow: hidden; /* Zapobiega przewijaniu strony podczas przeciągania */
-            height: 100vh;
+            margin: 0; padding: 10px;
+            display: flex; flex-direction: column; align-items: center;
+            height: 100vh; overflow: hidden;
         }
 
-        h1 { color: #006064; margin: 5px 0; font-size: 1.2rem; text-align: center; }
-
-        .ui-panel {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            z-index: 100;
-        }
-
+        .ui-panel { display: flex; gap: 10px; margin-bottom: 10px; }
+        
         button {
-            padding: 8px 15px;
-            font-size: 1rem;
-            cursor: pointer;
-            border-radius: 15px;
-            border: 2px solid #006064;
-            background: white;
-            color: #006064;
-            transition: all 0.2s;
+            padding: 10px 20px; font-size: 1rem; cursor: pointer;
+            border-radius: 20px; border: 2px solid #db2777;
+            background: white; color: #db2777; font-weight: bold;
         }
-        button.active { background: #006064; color: white; }
+        button.active { background: #db2777; color: white; }
 
         .game-area {
-            display: flex;
-            width: 100%;
-            height: calc(100vh - 80px);
-            gap: 10px;
-            justify-content: center;
+            display: flex; width: 100%; height: calc(100vh - 120px);
+            gap: 15px; justify-content: center;
         }
 
         /* Szafa */
         .wardrobe {
-            flex: 1;
-            max-width: 200px;
-            background: var(--panel-color);
-            border-radius: 20px;
-            padding: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            overflow-y: auto; /* Przewijanie ubrań jeśli jest ich dużo */
+            flex: 1; max-width: 250px; background: white;
+            border-radius: 20px; padding: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
         }
 
         .category-title {
-            font-size: 0.8rem;
-            color: #666;
-            margin: 5px 0 2px 0;
-            text-align: center;
-            border-bottom: 1px solid #eee;
+            font-size: 0.8rem; color: #999; text-align: center;
+            border-bottom: 2px solid #fce7f3; padding-bottom: 3px;
+            margin-top: 10px; font-weight: bold;
         }
 
-        /* Element ubrania w szafie (SVG) */
         .clothing-item {
-            width: 100%;
-            height: 60px; /* Stała wysokość kontenera w szafie */
-            cursor: grab;
-            touch-action: none; /* Ważne dla dotyku */
+            width: 100%; height: 80px; cursor: grab; touch-action: none;
+            background: #fff9fb; border: 1px solid #fbcfe8; border-radius: 12px;
         }
         
-        .clothing-item svg {
-            width: 100%;
-            height: 100%;
-        }
+        .clothing-item svg { width: 100%; height: 100%; }
 
-        /* Główny kontener postaci */
+        /* Postać */
         .doll-container {
-            flex: 2;
-            position: relative;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            max-width: 400px;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            overflow: hidden;
+            flex: 2; position: relative; background: white;
+            border-radius: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            max-width: 450px; display: flex; justify-content: center;
         }
 
-        /* SVG Postaci */
-        #character-svg {
-            height: 95%; /* Postać wypełnia większość wysokości */
-            margin-top: 2.5%;
-        }
+        #character-svg { height: 95%; margin-top: 2%; }
 
-        /* Kolory skóry */
         .skin { fill: var(--boy-skin); transition: fill 0.3s; }
-        .skin-girl { fill: var(--girl-skin); }
-
-        /* Stylizacja ubranych ubrań (na postaci) */
-        .dressed-item {
-            opacity: 0.9; /* Lekka przezroczystość, żeby widzieć postać pod spodem */
-            pointer-events: none; /* Nie przeszkadzają w łapaniu postaci */
-        }
-
+        #hair-girl { display: none; fill: var(--hair-color); }
+        
+        .dressed-item { pointer-events: none; }
     </style>
 </head>
 <body>
@@ -129,203 +80,82 @@
 
     <div class="game-area">
         <div class="wardrobe">
+            <div class="category-title">CZAPKI</div>
+            <div class="clothing-item" draggable="true" id="c_cap" data-type="head"><svg viewBox="110 35 80 60"><path d="M120 70 C120 40, 180 40, 180 70 Z" fill="#3b82f6"/><path d="M175 65 L205 75 L180 80 Z" fill="#2563eb"/></svg></div>
+            <div class="clothing-item" draggable="true" id="c_winter" data-type="head"><svg viewBox="110 35 80 60"><path d="M125 75 Q125 40 150 40 Q175 40 175 75 Z" fill="#ef4444"/><circle cx="150" cy="35" r="8" fill="white"/></svg></div>
+            <div class="clothing-item" draggable="true" id="c_crown" data-type="head"><svg viewBox="110 35 80 60"><path d="M120 75 L120 45 L135 60 L150 40 L165 60 L180 45 L180 75 Z" fill="#fbbf24" stroke="#d97706"/></svg></div>
+
+            <div class="category-title">SUKIENKI</div>
+            <div class="clothing-item" draggable="true" id="c_dress1" data-type="full"><svg viewBox="100 120 100 150"><path d="M130 120 L170 120 L195 260 L105 260 Z" fill="#ec4899"/><path d="M130 120 Q150 135 170 120" fill="none" stroke="white" stroke-width="3"/></svg></div>
+            <div class="clothing-item" draggable="true" id="c_dress2" data-type="full"><svg viewBox="100 120 100 150"><path d="M130 120 L170 120 L200 250 L100 250 Z" fill="#8b5cf6"/><circle cx="150" cy="180" r="15" fill="#ede9fe" opacity="0.5"/></svg></div>
+
+            <div class="category-title">GÓRA</div>
+            <div class="clothing-item" draggable="true" id="c_tshirt" data-type="torso"><svg viewBox="100 120 100 80"><path d="M115 125 L185 125 L195 160 L175 160 L175 200 L125 200 L125 160 L105 160 Z" fill="#10b981"/></svg></div>
             
-            <div class="category-title">NA GŁOWĘ</div>
-            <div class="clothing-item" draggable="true" id="wear_hat_cap" data-type="head">
-                <svg viewBox="115 45 70 50">
-                    <path d="M120 70 C120 40, 180 40, 180 70 Z" fill="#ff6b6b" stroke="#333" stroke-width="2"/>
-                    <path d="M175 65 L200 75 L180 80 Z" fill="#ff6b6b" stroke="#333" stroke-width="2"/>
-                </svg>
-            </div>
-            <div class="clothing-item" draggable="true" id="wear_hat_beret" data-type="head">
-                <svg viewBox="115 45 70 50">
-                    <ellipse cx="150" cy="65" rx="35" ry="15" fill="#4ecdc4" stroke="#333" stroke-width="2"/>
-                    <rect x="148" y="48" width="4" height="8" fill="#4ecdc4" stroke="#333" stroke-width="1"/>
-                </svg>
-            </div>
+            <div class="category-title">DÓŁ</div>
+            <div class="clothing-item" draggable="true" id="c_pants" data-type="legs"><svg viewBox="115 200 70 100"><path d="M125 200 L175 200 L180 300 L155 300 L150 250 L145 300 L120 300 Z" fill="#1e40af"/></svg></div>
 
-            <div class="category-title">NA TUŁÓW</div>
-            <div class="clothing-item" draggable="true" id="wear_torso_tshirt" data-type="torso">
-                <svg viewBox="100 110 100 90">
-                    <path d="M110 120 L135 120 C140 130, 160 130, 165 120 L190 120 L200 150 L180 155 L180 200 L120 200 L120 155 L100 150 Z" fill="#ffd93d" stroke="#333" stroke-width="2"/>
-                </svg>
-            </div>
-            <div class="clothing-item" draggable="true" id="wear_torso_jacket" data-type="torso">
-                <svg viewBox="100 110 100 90">
-                    <path d="M110 120 L190 120 L200 160 L185 160 L185 205 L115 205 L115 160 L100 160 Z" fill="#6c5ce7" stroke="#333" stroke-width="2"/>
-                    <line x1="150" y1="130" x2="150" y2="205" stroke="#333" stroke-width="2" stroke-dasharray="4"/>
-                </svg>
-            </div>
-
-            <div class="category-title">NA NOGI</div>
-            <div class="clothing-item" draggable="true" id="wear_legs_pants" data-type="legs">
-                <svg viewBox="115 195 70 110">
-                    <path d="M120 200 L180 200 L185 300 L155 300 L150 250 L145 300 L115 300 Z" fill="#1a508b" stroke="#333" stroke-width="2"/>
-                </svg>
-            </div>
-            <div class="clothing-item" draggable="true" id="wear_legs_skirt" data-type="legs">
-                <svg viewBox="110 195 80 70">
-                    <path d="M125 200 L175 200 L195 260 L105 260 Z" fill="#ff85a1" stroke="#333" stroke-width="2"/>
-                </svg>
-            </div>
-
-            <div class="category-title">NA STOPY</div>
-            <div class="clothing-item" draggable="true" id="wear_feet_sneakers" data-type="feet">
-                <svg viewBox="105 295 90 45">
-                    <path d="M110 320 L135 320 L140 335 L105 335 Z" fill="#eeeeee" stroke="#333" stroke-width="2"/> <path d="M165 320 L190 320 L195 335 L160 335 Z" fill="#eeeeee" stroke="#333" stroke-width="2"/> <path d="M110 335 L135 335 L135 342 L110 342 Z" fill="#555"/> <path d="M165 335 L190 335 L190 342 L165 342 Z" fill="#555"/>
-                </svg>
-            </div>
+            <div class="category-title">BUTY</div>
+            <div class="clothing-item" draggable="true" id="c_shoes1" data-type="feet"><svg viewBox="105 310 90 40"><rect x="110" y="325" width="30" height="15" rx="5" fill="#1f2937"/><rect x="160" y="325" width="30" height="15" rx="5" fill="#1f2937"/></svg></div>
+            <div class="clothing-item" draggable="true" id="c_shoes2" data-type="feet"><svg viewBox="105 310 90 40"><rect x="110" y="325" width="30" height="15" rx="5" fill="#f43f5e"/><rect x="160" y="325" width="30" height="15" rx="5" fill="#f43f5e"/></svg></div>
         </div>
 
         <div class="doll-container" id="drop-zone">
-            
-            <svg id="character-svg" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet">
-                
-                <defs>
-                    <clipPath id="body-clip">
-                        <ellipse cx="150" cy="165" rx="30" ry="40" /> </clipPath>
-                </defs>
+            <svg id="character-svg" viewBox="0 0 300 400">
+                <path id="hair-girl" d="M120 80 Q120 150 110 200 M180 80 Q180 150 190 200 Q150 50 120 80" stroke-width="40" stroke-linecap="round" stroke="#4b2c20"/>
 
-                <g id="base-persion">
-                    <circle class="skin" cx="150" cy="80" r="30" stroke="#333" stroke-width="2"/>
-                    <rect class="skin" x="145" y="105" width="10" height="20" stroke="#333" stroke-width="2"/>
-                    <ellipse class="skin" cx="150" cy="165" rx="30" ry="40" stroke="#333" stroke-width="2"/>
-                    <line x1="120" y1="130" x2="100" y2="190" stroke="#333" stroke-width="8" stroke-linecap="round"/> <line x1="180" y1="130" x2="200" y2="190" stroke="#333" stroke-width="8" stroke-linecap="round"/> <circle class="skin" cx="100" cy="190" r="6"/> <circle class="skin" cx="200" cy="190" r="6"/> <rect class="skin" x="125" y="200" width="15" height="110" rx="5" stroke="#333" stroke-width="2"/> <rect class="skin" x="160" y="200" width="15" height="110" rx="5" stroke="#333" stroke-width="2"/> <ellipse class="skin" cx="125" cy="315" rx="18" ry="8" stroke="#333" stroke-width="2"/>
-                    <ellipse class="skin" cx="175" cy="315" rx="18" ry="8" stroke="#333" stroke-width="2"/>
-                    <circle cx="140" cy="75" r="2" fill="#333"/> <circle cx="160" cy="75" r="2" fill="#333"/> <path d="M140 90 C145 95, 155 95, 160 90" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/> </g>
+                <g id="body">
+                    <circle class="skin" cx="150" cy="80" r="35"/> <rect class="skin" x="145" y="110" width="10" height="15"/> <rect class="skin" x="125" y="125" width="50" height="80" rx="15"/> <path class="skin" d="M125 140 L100 200" stroke-width="12" stroke-linecap="round" stroke="currentColor"/> <path class="skin" d="M175 140 L200 200" stroke-width="12" stroke-linecap="round" stroke="currentColor"/> <circle class="skin" cx="100" cy="205" r="7"/> <circle class="skin" cx="200" cy="205" r="7"/> <rect class="skin" x="130" y="205" width="15" height="110" rx="7"/> <rect class="skin" x="155" y="205" width="15" height="110" rx="7"/> <ellipse class="skin" cx="130" cy="325" rx="12" ry="6"/> <ellipse class="skin" cx="170" cy="325" rx="12" ry="6"/> </g>
 
                 <g id="slot-head" class="dressed-item"></g>
                 <g id="slot-torso" class="dressed-item"></g>
                 <g id="slot-legs" class="dressed-item"></g>
                 <g id="slot-feet" class="dressed-item"></g>
+                <g id="slot-full" class="dressed-item"></g>
 
+                <circle cx="140" cy="75" r="2" fill="black"/>
+                <circle cx="160" cy="75" r="2" fill="black"/>
+                <path d="M140 95 Q150 105 160 95" fill="none" stroke="black" stroke-width="2"/>
             </svg>
         </div>
     </div>
 
     <script>
-        // Konfiguracja kolorów skóry
-        const skinColors = {
-            boy: '#ffdbac',
-            girl: '#f1c27d'
-        };
-
-        let currentGender = 'boy';
-
-        // Przełączanie płci (zmienia tylko kolor skóry w tym prostym modelu)
-        function setGender(gender) {
-            currentGender = gender;
-            document.getElementById('btn-boy').classList.toggle('active', gender === 'boy');
-            document.getElementById('btn-girl').classList.toggle('active', gender === 'girl');
-            
-            const skinElements = document.querySelectorAll('.skin');
-            skinElements.forEach(el => {
-                el.style.fill = skinColors[gender];
-            });
+        function setGender(g) {
+            currentGender = g;
+            document.getElementById('btn-boy').className = g === 'boy' ? 'active' : '';
+            document.getElementById('btn-girl').className = g === 'girl' ? 'active' : '';
+            document.querySelectorAll('.skin').forEach(el => el.style.fill = g === 'boy' ? 'var(--boy-skin)' : 'var(--girl-skin)');
+            document.getElementById('hair-girl').style.display = g === 'girl' ? 'block' : 'none';
         }
 
-        // --- MECHANIKA DRAG & DROP (Myszka + Dotyk) ---
-
-        const clothingItems = document.querySelectorAll('.clothing-item');
-        const dropZone = document.getElementById('drop-zone');
-
-        // Dla każdego ubrania w szafie dodaj obsługę zdarzeń
-        clothingItems.forEach(item => {
-            // HTML5 Drag and Drop (Myszka)
-            item.addEventListener('dragstart', handleDragStart);
-            
-            // Touch Events (dla tabletów/telefonów - używamy biblioteki polyfill niepotrzebnie, napiszmy prostą logikę)
-            item.addEventListener('touchstart', handleTouchStart, { passive: false });
+        const items = document.querySelectorAll('.clothing-item');
+        items.forEach(item => {
+            item.onmousedown = (e) => startDrag(e, item);
+            item.ontouchstart = (e) => startDrag(e, item);
         });
 
-        // Strefa zrzutu
-        dropZone.addEventListener('dragover', (e) => e.preventDefault());
-        dropZone.addEventListener('drop', handleDrop);
-
-        // Funkcje dla myszki
-        function handleDragStart(e) {
-            e.dataTransfer.setData('text/plain', e.target.id);
-            e.dataTransfer.setData('clothing-type', e.target.getAttribute('data-type'));
+        function startDrag(e, item) {
+            const type = item.dataset.type;
+            const svgContent = item.innerHTML;
+            
+            // Prosta mechanika dla 6-latka: Kliknij aby ubrać
+            dress(type, svgContent);
         }
 
-        function handleDrop(e) {
-            e.preventDefault();
-            const id = e.dataTransfer.getData('text/plain');
-            const type = e.dataTransfer.getData('clothing-type');
-            dressCharacter(id, type);
-        }
-
-        // Funkcje dla dotyku (emulacja przeciągania)
-        let activeTouchItem = null;
-        let touchOffsetX = 0;
-        let touchOffsetY = 0;
-
-        function handleTouchStart(e) {
-            e.preventDefault(); // Zapobiega przewijaniu strony
-            activeTouchItem = e.currentTarget;
-            const touch = e.touches[0];
-            const rect = activeTouchItem.getBoundingClientRect();
-            
-            // Zapamiętaj offset dotyku względem elementu
-            touchOffsetX = touch.clientX - rect.left;
-            touchOffsetY = touch.clientY - rect.top;
-
-            // Stwórz klon do wizualizacji przeciągania
-            activeTouchItem.style.opacity = '0.5';
-            
-            window.addEventListener('touchmove', handleTouchMove, { passive: false });
-            window.addEventListener('touchend', handleTouchEnd);
-        }
-
-        function handleTouchMove(e) {
-            e.preventDefault();
-            if (!activeTouchItem) return;
-            // Tutaj moglibyśmy przesuwać klon elementu za palcem, 
-            // ale dla 6-latka prostsze jest: dotknij w szafie -> ubiór się pojawia.
-            // Zostawmy pustą, ubierzemy w touchend.
-        }
-
-        function handleTouchEnd(e) {
-            window.removeEventListener('touchmove', handleTouchMove);
-            window.removeEventListener('touchend', handleTouchEnd);
-            
-            if (!activeTouchItem) return;
-            
-            const touch = e.changedTouches[0];
-            const dropZoneRect = dropZone.getBoundingClientRect();
-
-            // Sprawdź, czy puszczono nad postacią
-            if (touch.clientX > dropZoneRect.left && touch.clientX < dropZoneRect.right &&
-                touch.clientY > dropZoneRect.top && touch.clientY < dropZoneRect.bottom) {
-                
-                const id = activeTouchItem.id;
-                const type = activeTouchItem.getAttribute('data-type');
-                dressCharacter(id, type);
+        function dress(type, content) {
+            if (type === 'full') {
+                // Sukienka zdejmuje bluzkę i spodnie
+                document.getElementById('slot-torso').innerHTML = '';
+                document.getElementById('slot-legs').innerHTML = '';
+                document.getElementById('slot-full').innerHTML = content;
+            } else if (type === 'torso' || type === 'legs') {
+                // Bluzka/spodnie zdejmują sukienkę
+                document.getElementById('slot-full').innerHTML = '';
+                document.getElementById('slot-' + type).innerHTML = content;
+            } else {
+                document.getElementById('slot-' + type).innerHTML = content;
             }
-
-            activeTouchItem.style.opacity = '1';
-            activeTouchItem = null;
-        }
-
-
-        // GŁÓWNA FUNKCJA UBIERANIA
-        function dressCharacter(itemId, type) {
-            // 1. Znajdź SVG ubrania w szafie
-            const sourceItem = document.getElementById(itemId);
-            const sourceSvgG = sourceItem.querySelector('svg').innerHTML; // Pobierz środek SVG
-
-            // 2. Znajdź odpowiedni slot na postaci
-            const slot = document.getElementById('slot-' + type);
-
-            // 3. Wyczyść slot (zdejmij poprzednie ubranie z tej kategorii)
-            slot.innerHTML = '';
-
-            // 4. Wstaw nową grafikę do slotu na postaci
-            slot.innerHTML = sourceSvgG;
-
-            // Wizualne potwierdzenie (mrugnięcie)
-            dropZone.style.background = '#f0fff0';
-            setTimeout(() => dropZone.style.background = 'white', 150);
         }
     </script>
 </body>

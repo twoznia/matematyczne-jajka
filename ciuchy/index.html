@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=none">
-    <title>Precyzyjna Ubieranka 2.0</title>
+    <title>Szafa Malucha 2.0</title>
     <style>
         :root {
-            --bg-color: #f0fdf4; /* Bladozielony */
-            --panel-color: #ffffff;
+            --bg-color: #fff5f5;
+            --accent: #ff6b6b;
             --boy-skin: #ffdbac;
             --girl-skin: #f1c27d;
-            --hair-color: #4b2c20;
-            --accent: #16a34a; /* Zielony akcent */
         }
 
         body {
@@ -22,88 +20,89 @@
             height: 100vh; overflow: hidden;
         }
 
-        h1 { color: #166534; margin: 5px 0; font-size: 1.3rem; }
-
-        .ui-panel { display: flex; gap: 10px; margin-bottom: 10px; z-index: 10; }
+        .ui-panel { display: flex; gap: 10px; margin-bottom: 10px; }
         
         button {
-            padding: 10px 20px; font-size: 1rem; cursor: pointer;
-            border-radius: 20px; border: 2px solid var(--accent);
+            padding: 10px 15px; font-size: 0.9rem; cursor: pointer;
+            border-radius: 15px; border: 2px solid var(--accent);
             background: white; color: var(--accent); font-weight: bold;
-            transition: all 0.2s;
         }
-        button.active { background: var(--accent); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        button:active { transform: scale(0.95); }
+        button.active { background: var(--accent); color: white; }
 
         .game-area {
-            display: flex; width: 100%; height: calc(100vh - 130px);
-            gap: 15px; justify-content: center; max-width: 1200px;
+            display: flex; width: 100%; height: calc(100vh - 120px);
+            gap: 15px; justify-content: center; max-width: 1100px;
         }
 
-        /* Szafa */
+        /* SZAFA - 2 KOLUMNY */
         .wardrobe {
-            flex: 1; max-width: 280px; background: white;
-            border-radius: 20px; padding: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.05);
-            overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+            flex: 1.2; max-width: 350px; background: white;
+            border-radius: 20px; padding: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow-y: auto;
         }
 
-        /* Pasek przewijania dla szafy */
-        .wardrobe::-webkit-scrollbar { width: 8px; }
-        .wardrobe::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        .wardrobe::-webkit-scrollbar-thumb { background: #86efac; border-radius: 10px; }
-
-        .category-title {
-            font-size: 0.85rem; color: #777; text-align: center;
-            border-bottom: 2px solid #d1fae5; padding-bottom: 3px;
-            margin-top: 12px; font-weight: bold; text-transform: uppercase;
+        .category-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 15px;
         }
 
-        /* Miniatura ubrania w szafie */
-        .clothing-thumb {
-            width: 100%; height: 70px; cursor: pointer;
-            background: #f9fdfa; border: 1px solid #d1fae5; border-radius: 12px;
-            transition: transform 0.2s, background 0.2s;
-            display: flex; align-items: center; justify-content: center;
+        .category-header {
+            grid-column: span 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff0f0;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: #d63031;
+            font-weight: bold;
+        }
+
+        .btn-remove {
+            background: #ff7675;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+
+        /* MINIATURKA W SZAFIE */
+        .clothing-item {
+            aspect-ratio: 1/1;
+            background: #fdfdfd;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
             overflow: hidden;
         }
         
-        .clothing-thumb:hover { background: #ecfdf5; transform: scale(1.02); }
-        .clothing-thumb:active { transform: scale(0.98); }
-        
-        /* Styl dla SVG wewnątrz miniatury szafy */
-        .clothing-thumb svg {
-            height: 160%; /* Powiększamy, aby ubranie było widoczne w miniaturze */
-            width: auto;
-            transform: translateY(20%); /* Centrujemy ubranie w okienku */
-        }
+        .clothing-item:hover { border-color: var(--accent); background: #fffafa; }
+        .clothing-item svg { width: 85%; height: 85%; }
 
-        /* Postać */
+        /* POSTAĆ */
         .doll-container {
-            flex: 2; position: relative; background: white;
-            border-radius: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            max-width: 500px; display: flex; justify-content: center; align-items: center;
-            overflow: hidden;
+            flex: 1.5; position: relative; background: white;
+            border-radius: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            max-width: 450px; display: flex; justify-content: center;
         }
 
-        #character-svg {
-            height: 95%; /* Postać wypełnia większość wysokości */
-            width: auto;
-        }
-
-        /* Style bazowe */
+        #character-svg { height: 95%; width: auto; margin-top: 2%; }
         .skin { fill: var(--boy-skin); transition: fill 0.3s; }
-        #hair-girl { display: none; fill: var(--hair-color); }
-        .face-detail { fill: none; stroke: black; stroke-width: 2; stroke-linecap: round; }
-        
-        /* Warstwy ubrań na postaci */
-        .dressed-item { pointer-events: none; } /* Nie można kliknąć założonego ubrania */
-
+        #hair-girl { display: none; fill: #4b2c20; }
+        .dressed-item { pointer-events: none; }
     </style>
 </head>
 <body>
-
-    <h1>Ubraniowe Frykasy dla Bobasa! 👗👕</h1>
 
     <div class="ui-panel">
         <button id="btn-boy" class="active" onclick="setGender('boy')">Chłopiec 👦</button>
@@ -115,122 +114,111 @@
             </div>
 
         <div class="doll-container">
-            <svg id="character-svg" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet">
+            <svg id="character-svg" viewBox="0 0 300 400">
+                <path id="hair-girl" d="M110 70 Q110 150 100 220 M190 70 Q190 150 200 220 Q150 30 110 70" stroke-width="45" stroke-linecap="round"/>
                 
-                <path id="hair-girl" d="M110 70 Q110 150 100 220 M190 70 Q190 150 200 220 Q150 30 110 70" stroke-width="45" stroke-linecap="round" stroke="#4b2c20"/>
-
-                <g id="body">
-                    <circle class="skin" cx="150" cy="80" r="35"/> <rect class="skin" x="145" y="110" width="10" height="15"/> <rect class="skin" x="125" y="125" width="50" height="90" rx="15"/> <path class="skin" d="M125 140 L95 210 Q95 215 100 215 L105 215 L125 160" /> <path class="skin" d="M175 140 L205 210 Q205 215 200 215 L195 215 L175 160" /> <circle class="skin" cx="100" cy="215" r="8"/> 
+                <g id="body-base">
+                    <circle class="skin" cx="150" cy="80" r="35"/>
+                    <rect class="skin" x="145" y="110" width="10" height="15"/>
+                    <rect class="skin" x="125" y="125" width="50" height="90" rx="15"/>
+                    <path class="skin" d="M125 140 L95 210 Q95 215 100 215 L105 215 L125 160" /> 
+                    <path class="skin" d="M175 140 L205 210 Q205 215 200 215 L195 215 L175 160" />
+                    <circle class="skin" cx="100" cy="215" r="8"/> 
                     <circle class="skin" cx="200" cy="215" r="8"/> 
-
-                    <rect class="skin" x="130" y="215" width="16" height="115" rx="8"/> <rect class="skin" x="154" y="215" width="16" height="115" rx="8"/> <ellipse class="skin" cx="130" cy="335" rx="14" ry="7"/> 
+                    <rect class="skin" x="130" y="215" width="16" height="115" rx="8"/>
+                    <rect class="skin" x="154" y="215" width="16" height="115" rx="8"/>
+                    <ellipse class="skin" cx="130" cy="335" rx="14" ry="7"/> 
                     <ellipse class="skin" cx="170" cy="335" rx="14" ry="7"/> 
                 </g>
 
-                <g id="slot-full" class="dressed-item"></g> <g id="slot-legs" class="dressed-item"></g> <g id="slot-torso" class="dressed-item"></g> <g id="slot-head" class="dressed-item"></g> <g id="slot-feet" class="dressed-item"></g> <circle cx="140" cy="75" r="2.5" fill="black"/>
+                <g id="slot-full" class="dressed-item"></g>
+                <g id="slot-legs" class="dressed-item"></g>
+                <g id="slot-torso" class="dressed-item"></g>
+                <g id="slot-head" class="dressed-item"></g>
+                <g id="slot-feet" class="dressed-item"></g>
+
+                <circle cx="140" cy="75" r="2.5" fill="black"/>
                 <circle cx="160" cy="75" r="2.5" fill="black"/>
-                <path class="face-detail" d="M140 95 Q150 105 160 95"/>
+                <path d="M140 95 Q150 105 160 95" fill="none" stroke="black" stroke-width="2" stroke-linecap="round"/>
             </svg>
         </div>
     </div>
 
     <script>
-        // --- KONFIGURACJA ---
-        let currentGender = 'boy';
-        const skinColors = { boy: '#ffdbac', girl: '#f1c27d' };
+        const categories = {
+            head: { label: "CZAPKI", vb: "110 30 80 60" },
+            torso: { label: "BLUZKI", vb: "90 120 120 100" },
+            full: { label: "SUKIENKI", vb: "90 120 120 190" },
+            legs: { label: "SPODNIE", vb: "110 210 80 110" },
+            feet: { label: "BUTY", vb: "110 310 80 50" }
+        };
 
-        // --- BIBLIOTEKA DOPASOWANYCH UBRAŃ (SVG) ---
-        // Każdy element jest narysowany dokładnie w układzie współrzędnych postaci (0-300, 0-400)
-        const clothingLibrary = [
-            // CZAPKI
-            { id: 'h_cap', type: 'head', title: 'Czapka z daszkiem', svg: '<path d="M115 70 C115 35, 185 35, 185 70 Z" fill="#2563eb"/><path d="M180 65 L215 75 L185 85 Z" fill="#1d4ed8"/>' },
-            { id: 'h_winter', type: 'head', title: 'Czapka zimowa', svg: '<path d="M120 75 Q120 35 150 35 Q180 35 180 75 Z" fill="#ef4444"/><rect x="115" y="70" width="70" height="10" rx="5" fill="white"/><circle cx="150" cy="30" r="10" fill="white"/>' },
-            { id: 'h_crown', type: 'head', title: 'Korona', svg: '<path d="M115 75 L115 40 L132 60 L150 35 L168 60 L185 40 L185 75 Z" fill="#fbbf24" stroke="#b45309" stroke-width="2"/>' },
-            
-            // BLUZKI (Dopasowane rękawy)
-            { id: 't_tshirt', type: 'torso', title: 'Zielona koszulka', svg: '<path d="M125 125 H175 L180 155 L160 155 L160 215 H140 L140 155 L120 155 Z" fill="#10b981"/><path d="M125 125 L95 180 L105 185 L125 145 Z" fill="#10b981"/><path d="M175 125 L205 180 L195 185 L175 145 Z" fill="#10b981"/>' },
-            { id: 't_jacket', type: 'torso', title: 'Niebieska bluza', svg: '<path d="M120 125 H180 L185 215 H115 Z" fill="#3b82f6" rx="10"/><path d="M120 125 L90 205 L105 210 L125 155 Z" fill="#3b82f6"/><path d="M180 125 L210 205 L195 210 L175 155 Z" fill="#3b82f6"/><rect x="147" y="135" width="6" height="80" rx="3" fill="#1d4ed8"/>' },
-            
-            // SUKIENKI (Dopasowane do tułowia i nóg)
-            { id: 'd_pink', type: 'full', title: 'Różowa sukienka', svg: '<path d="M130 125 H170 L200 310 H100 Z" fill="#ec4899"/><path d="M130 125 Q150 140 170 125" fill="none" stroke="white" stroke-width="4"/>' },
-            { id: 'd_purple', type: 'full', title: 'Fioletowa w kropki', svg: '<path d="M130 125 H170 L205 290 Q150 310 95 290 Z" fill="#8b5cf6"/><circle cx="130" cy="180" r="10" fill="white" opacity="0.3"/><circle cx="170" cy="180" r="10" fill="white" opacity="0.3"/><circle cx="150" cy="230" r="10" fill="white" opacity="0.3"/>' },
-            
-            // SPODNIE
-            { id: 'p_jeans', type: 'legs', title: 'Jeansy', svg: '<path d="M125 210 H175 L182 320 H155 L150 260 L145 320 H118 Z" fill="#1e40af"/><path d="M125 220 H175" stroke="#1d4ed8" stroke-width="2"/>' },
-            { id: 'p_shorts', type: 'legs', title: 'Szorty', svg: '<path d="M125 210 H175 L180 260 H155 L150 240 L145 260 H120 Z" fill="#f97316"/>' },
+        const library = [
+            { type: 'head', color: '#ff7675', svg: '<path d="M120 70 C120 35, 180 35, 180 70 Z" fill="TARGET"/><path d="M175 65 L205 75 L180 85 Z" fill="TARGET"/>' },
+            { type: 'head', color: '#74b9ff', svg: '<path d="M120 75 Q120 35 150 35 Q180 35 180 75 Z" fill="TARGET"/><circle cx="150" cy="30" r="8" fill="white"/>' },
+            { type: 'head', color: '#fab1a0', svg: '<ellipse cx="150" cy="68" rx="35" ry="12" fill="TARGET"/><circle cx="150" cy="55" r="5" fill="TARGET"/>' },
+            { type: 'head', color: '#ffeaa7', svg: '<path d="M115 75 L115 45 L132 65 L150 40 L168 65 L185 45 L185 75 Z" fill="TARGET" stroke="#d6a01e"/>' },
 
-            // BUTY (Dopasowane do stóp)
-            { id: 'f_sneakers', type: 'feet', title: 'Adidasy', svg: '<rect x="115" y="330" width="30" height="15" rx="5" fill="#e5e7eb"/><rect x="155" y="330" width="30" height="15" rx="5" fill="#e5e7eb"/><path d="M115 342 H145 V348 H115 Z" fill="#9ca3af"/><path d="M155 342 H185 V348 H155 Z" fill="#9ca3af"/>' },
-            { id: 'f_sandals', type: 'feet', title: 'Sandały', svg: '<ellipse cx="130" cy="335" rx="15" ry="5" fill="#84cc16"/><ellipse cx="170" cy="335" rx="15" ry="5" fill="#84cc16"/><path d="M120 335 Q130 315 140 335" fill="none" stroke="#4d7c0f" stroke-width="3"/><path d="M160 335 Q170 315 180 335" fill="none" stroke="#4d7c0f" stroke-width="3"/>' }
+            { type: 'torso', color: '#55efc4', svg: '<path d="M125 125 H175 L180 155 L160 155 L160 215 H140 L140 155 L120 155 Z M125 125 L95 180 L105 185 L125 145 Z M175 125 L205 180 L195 185 L175 145 Z" fill="TARGET"/>' },
+            { type: 'torso', color: '#81ecec', svg: '<path d="M125 125 H175 L185 210 H115 Z M125 125 L95 200 L110 205 L125 150 Z M175 125 L205 200 L190 205 L175 150 Z" fill="TARGET"/><rect x="115" y="150" width="70" height="5" fill="white" opacity="0.3"/><rect x="115" y="170" width="70" height="5" fill="white" opacity="0.3"/>' },
+            
+            { type: 'full', color: '#fd79a8', svg: '<path d="M130 125 H170 L200 310 H100 Z" fill="TARGET"/><path d="M130 125 Q150 145 170 125" fill="none" stroke="white" stroke-width="4"/>' },
+            { type: 'full', color: '#a29bfe', svg: '<path d="M130 125 H170 L210 290 Q150 315 90 290 Z" fill="TARGET"/><circle cx="150" cy="200" r="20" fill="white" opacity="0.2"/>' },
+
+            { type: 'legs', color: '#0984e3', svg: '<path d="M125 210 H175 L182 320 H155 L150 260 L145 320 H118 Z" fill="TARGET"/>' },
+            { type: 'legs', color: '#636e72', svg: '<path d="M125 210 H175 L180 280 H120 Z" fill="TARGET"/>' },
+            { type: 'legs', color: '#e17055', svg: '<path d="M125 210 H175 L182 320 H155 L150 260 L145 320 H118 Z" fill="TARGET"/><rect x="135" y="270" width="10" height="20" fill="black" opacity="0.1"/><rect x="155" y="270" width="10" height="20" fill="black" opacity="0.1"/>' },
+
+            { type: 'feet', color: '#2d3436', svg: '<rect x="115" y="330" width="30" height="15" rx="5" fill="TARGET"/><rect x="155" y="330" width="30" height="15" rx="5" fill="TARGET"/>' },
+            { type: 'feet', color: '#d63031', svg: '<path d="M115 330 H145 V345 H115 Z M155 330 H185 V345 H155 Z" fill="TARGET" stroke="white" stroke-width="1"/>' }
         ];
 
-        // --- FUNKCJE GRY ---
-
-        // Inicjalizacja szafy
-        function initWardrobe() {
-            const container = document.getElementById('wardrobe-content');
-            container.innerHTML = ''; // Wyczyść
-
-            clothingLibrary.forEach(item => {
-                // Stwórz kontener miniatury
-                const thumb = document.createElement('div');
-                thumb.className = 'clothing-thumb';
-                thumb.title = item.title;
-                thumb.onclick = () => dress(item.id); // Kliknięcie ubiera
-
-                // Stwórz SVG dla miniatury (kopia głównego SVG, ale w małym okienku)
-                thumb.innerHTML = `<svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet">${item.svg}</svg>`;
-                
-                container.appendChild(thumb);
-            });
-        }
-
-        // Zakładanie ubrania
-        function dress(itemId) {
-            const item = clothingLibrary.find(i => i.id === itemId);
-            if (!item) return;
-
-            const slotId = 'slot-' + item.type;
-            const slot = document.getElementById(slotId);
-
-            // Logika zdejmowania ubrań konfliktowych
-            if (item.type === 'full') {
-                // Sukienka zdejmuje bluzkę i spodnie
-                document.getElementById('slot-torso').innerHTML = '';
-                document.getElementById('slot-legs').innerHTML = '';
-            } else if (item.type === 'torso' || item.type === 'legs') {
-                // Bluzka lub spodnie zdejmują sukienkę
-                document.getElementById('slot-full').innerHTML = '';
-            }
-
-            // Wstaw precyzyjnie dopasowany kod SVG do slotu na postaci
-            slot.innerHTML = item.svg;
-
-            // Opcjonalnie: Mały efekt wizualny na postaci
-            const charSvg = document.getElementById('character-svg');
-            charSvg.style.transform = 'scale(1.01)';
-            setTimeout(() => charSvg.style.transform = 'scale(1)', 100);
-        }
-
-        // Zmiana płci
-        function setGender(gender) {
-            currentGender = gender;
-            document.getElementById('btn-boy').className = gender === 'boy' ? 'active' : '';
-            document.getElementById('btn-girl').className = gender === 'girl' ? 'active' : '';
+        function init() {
+            const wardrobe = document.getElementById('wardrobe-content');
             
-            // Zmiana koloru skóry
-            document.querySelectorAll('.skin').forEach(el => {
-                el.style.fill = skinColors[gender];
-            });
+            for (const [key, cat] of Object.entries(categories)) {
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                header.innerHTML = `<span>${cat.label}</span><button class="btn-remove" onclick="removeCloth('${key}')">Zdejmij ❌</button>`;
+                wardrobe.appendChild(header);
 
-            // Pokaż/ukryj włosy dziewczynki
-            document.getElementById('hair-girl').style.display = gender === 'girl' ? 'block' : 'none';
+                const group = document.createElement('div');
+                group.className = 'category-group';
+                
+                library.filter(i => i.type === key).forEach(item => {
+                    const box = document.createElement('div');
+                    box.className = 'clothing-item';
+                    const finalSvg = item.svg.replace(/TARGET/g, item.color);
+                    box.innerHTML = `<svg viewBox="${cat.vb}">${finalSvg}</svg>`;
+                    box.onclick = () => dress(key, finalSvg);
+                    group.appendChild(box);
+                });
+                wardrobe.appendChild(group);
+            }
         }
 
-        // --- START ---
-        initWardrobe();
-        setGender('boy'); // Zacznij jako chłopiec
+        function dress(type, svg) {
+            if (type === 'full') {
+                removeCloth('torso');
+                removeCloth('legs');
+            } else if (type === 'torso' || type === 'legs') {
+                removeCloth('full');
+            }
+            document.getElementById('slot-' + type).innerHTML = svg;
+        }
 
+        function removeCloth(type) {
+            document.getElementById('slot-' + type).innerHTML = '';
+        }
+
+        function setGender(g) {
+            document.getElementById('btn-boy').className = g === 'boy' ? 'active' : '';
+            document.getElementById('btn-girl').className = g === 'girl' ? 'active' : '';
+            document.querySelectorAll('.skin').forEach(el => el.style.fill = g === 'boy' ? 'var(--boy-skin)' : 'var(--girl-skin)');
+            document.getElementById('hair-girl').style.display = g === 'girl' ? 'block' : 'none';
+        }
+
+        init();
     </script>
 </body>
 </html>

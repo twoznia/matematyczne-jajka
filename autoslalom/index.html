@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elektronika IM-23 - Pro Edition</title>
+    <title>Elektronika IM-23 - Sterowanie Naprawione</title>
     <style>
         :root { 
             --bg-lcd: #8b956d; 
@@ -21,7 +21,7 @@
             font-family: 'Courier New', Courier, monospace; 
             overflow: hidden; 
             user-select: none; 
-            touch-action: manipulation; 
+            touch-action: none; /* Blokuje przybliżanie i przesuwanie strony */
         }
         
         #console { 
@@ -55,7 +55,6 @@
             border-radius: 5px;
         }
         
-        /* ZMNIEJSZONA DŁUGOŚĆ AUT (z 50px na 35px) */
         .car-shape { 
             position: absolute; 
             width: 54px; 
@@ -118,7 +117,8 @@
             font-size: 28px; 
             font-weight: bold; 
             cursor: pointer; 
-            outline: none; 
+            outline: none;
+            -webkit-tap-highlight-color: transparent; /* Usuwa niebieskie podświetlenie na iPhone */
         }
         .btn:active { 
             transform: translateY(4px); 
@@ -178,7 +178,7 @@
             
             <div id="overlay">
                 <h1 id="status-title" style="margin:0; font-size: 32px;">AUTOSLALOM</h1>
-                <p id="final-info" style="font-size: 14px; margin: 15px 0;">TRYB AGRESYWNY (40+)<br>Poprawiony hitbox!</p>
+                <p id="final-info" style="font-size: 14px; margin: 15px 0;">TRYB AGRESYWNY (40+)<br>Sterowanie naprawione!</p>
                 <button class="menu-btn" id="action-btn" onclick="startGame()">START</button>
             </div>
 
@@ -191,8 +191,8 @@
     </div>
 
     <div class="controls">
-        <button class="btn" onmousedown="moveLeft()" ontouchstart="moveLeft()">LEWO</button>
-        <button class="btn" onmousedown="moveRight()" ontouchstart="moveRight()">PRAWO</button>
+        <button class="btn" onclick="handleMove('L')">LEWO</button>
+        <button class="btn" onclick="handleMove('P')">PRAWO</button>
         <button class="btn-reset" onclick="resetHiScore()">RESETUJ REKORD</button>
     </div>
 </div>
@@ -224,6 +224,13 @@
     let currentSpeed = baseSpeed + (4 * (baseSpeed * 0.05));
     let lanes = [];
 
+    // Zapobieganie menu kontekstowemu przy długim dotknięciu przycisku
+    window.oncontextmenu = function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
+    };
+
     function calculateLanes() {
         const sw = screen.clientWidth;
         const carW = 54;
@@ -247,13 +254,21 @@
         }
     }
 
-    function moveLeft() { if(playerLane > 0 && gameActive) { playerLane--; updatePlayerPos(); } }
-    function moveRight() { if(playerLane < 3 && gameActive) { playerLane++; updatePlayerPos(); } }
-    function updatePlayerPos() { player.style.left = lanes[playerLane] + 'px'; }
+    // Nowa funkcja obsługi ruchu, która zapobiega podwójnemu wywołaniu
+    function handleMove(dir) {
+        if (!gameActive) return;
+        if (dir === 'L' && playerLane > 0) playerLane--;
+        if (dir === 'P' && playerLane < 3) playerLane++;
+        updatePlayerPos();
+    }
+
+    function updatePlayerPos() { 
+        player.style.left = lanes[playerLane] + 'px'; 
+    }
 
     window.addEventListener('keydown', (e) => {
-        if(e.key === 'ArrowLeft') moveLeft();
-        if(e.key === 'ArrowRight') moveRight();
+        if(e.key === 'ArrowLeft') handleMove('L');
+        if(e.key === 'ArrowRight') handleMove('P');
     });
 
     function spawn(laneIdx) {
@@ -295,16 +310,13 @@
         }
 
         const screenH = screen.clientHeight;
-        const playerYTop = screenH - 65; // Orientacyjna góra auta gracza
 
         for(let i = obstacles.length - 1; i >= 0; i--) {
             let o = obstacles[i];
             o.y += currentSpeed;
             o.el.style.top = o.y + 'px';
 
-            /* ZMODYFIKOWANY HITBOX: 
-               Dodany "zapas" - uderzenie zaliczane tylko gdy środek auta o.y 
-               pokryje się mocno z graczem. Zwiększono marginesy o 8px z każdej strony. */
+            // Hitbox z zapasem
             if(o.y > screenH - 92 && o.y < screenH - 48 && o.lane === playerLane) {
                 handleHit(o, i);
                 continue;

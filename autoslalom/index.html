@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Elektronika IM-23 - Samochody Retro</title>
+    <style>
+        :root { --bg-lcd: #8b956d; --segment-on: rgba(0, 0, 0, 0.85); --case: #d1d1d1; --hit-color: #a00; }
+        body { background: #1a1a1a; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: monospace; overflow: hidden; user-select: none; touch-action: manipulation; }
+        #console { background: var(--case); padding: 40px 20px; border-radius: 40px; box-shadow: inset -5px -5px 15px #888, 0 20px 50px #000; border: 4px solid #bbb; }
+        #screen-border { background: #333; padding: 15px; border-radius: 10px; }
+        #screen { width: 300px; height: 220px; background: var(--bg-lcd); position: relative; overflow: hidden; border: 2px solid #555; }
+        
+        /* Stylizacja samochodu (ikona) */
+        .car-shape {
+            position: absolute;
+            width: 40px;
+            height: 35px;
+            transition: left 0.1s;
+        }
+        
+        /* Wygląd auta - korpus i koła */
+        .car-body {
+            position: absolute;
+            width: 24px;
+            height: 35px;
+            background: var(--segment-on);
+            left: 8px;
+            border-radius: 4px;
+        }
+        .car-body::before { /* Szyba */
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 10px;
+            background: var(--bg-lcd);
+            left: 3px;
+            top: 6px;
+            border-radius: 2px;
+        }
+        .wheel {
+            position: absolute;
+            width: 6px;
+            height: 10px;
+            background: var(--segment-on);
+            border-radius: 2px;
+        }
+        .w1 { top: 4px; left: 0; } .w2 { top: 4px; right: 0; }
+        .w3 { bottom: 4px; left: 0; } .w4 { bottom: 4px; right: 0; }
+
+        /* Efekt BLINK przy uderzeniu */
+        .blink { animation: blink-animation 0.1s steps(2, start) infinite; }
+        @keyframes blink-animation {
+            to { visibility: hidden; }
+        }
+        .hit-style .car-body, .hit-style .wheel { background: var(--hit-color) !important; }
+
+        #ui { position: absolute; top: 5px; right: 10px; text-align: right; color: var(--segment-on); z-index: 5; }
+        #score { font-size: 24px; font-weight: bold; }
+        .controls { display: flex; justify-content: space-around; align-items: center; margin-top: 30px; gap: 10px; }
+        .btn { width: 70px; height: 70px; background: #c00; border-radius: 50%; border: 2px solid #800; color: white; font-size: 20px; cursor: pointer; outline: none; }
+        .btn:active { transform: translateY(3px); }
+        .btn-reset { width: auto; height: auto; padding: 10px; background: #555; border-radius: 5px; border: 1px solid #000; font-size: 10px; color: #ccc; cursor: pointer; text-transform: uppercase; }
+        #overlay { position: absolute; inset: 0; background: var(--bg-lcd); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; border: 1px solid #000; }
+        #start-btn { padding: 10px 20px; cursor: pointer; background: #333; color: white; border: none; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="console">
+    <div id="screen-border">
+        <div id="screen">
+            <div id="ui">
+                <div id="hi-score">HI: 0000</div>
+                <div id="score">0000</div>
+                <div id="lives">♥♥♥</div>
+            </div>
+            
+            <div id="overlay">
+                <h2 id="status-title" style="margin:0">AUTOSLALOM</h2>
+                <p id="final-info">Start od trudności 40</p>
+                <button id="start-btn" onclick="startGame()">START</button>
+            </div>
+
+            <div id="player" class="car-shape" style="bottom: 15px; display: none;">
+                <div class="wheel w1"></div><div class="wheel w2"></div>
+                <div class="car-body"></div>
+                <div class="wheel w3"></div><div class="wheel w4"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="moveLeft()">L</button>
+        <button class="btn-reset" onclick="resetHiScore()">Reset<br>HI-SCORE</button>
+        <button class="btn" onclick="moveRight()">P</button>
+    </div>
+</div>
+
+<script>
+    const screen = document.getElementById('screen');
+    const player = document.getElementById('player');
+    const scoreEl = document.getElementById('score');
+    const hiScoreEl = document.getElementById('hi-score');
+    const livesEl = document.getElementById('lives');
+    const overlay = document.getElementById('overlay');
+    const finalInfo = document.getElementById('final-info');
+
+    let score = 0;
+    let hiScore = localStorage.getItem('autoslalom_hi') || 0;
+    let lives = 3;
+    let playerLane = 1;
+    let gameActive = false;
+    let obstacles = [];
+    let spawnTimer = 0;
+    
+    const baseSpeed = 3.5;
+    const initialDifficultyOffset = 40;
+    let currentSpeed = baseSpeed + (4 * (baseSpeed * 0.05));
+
+    const lanes = [20, 90, 160, 230];
+    updateHiScoreDisplay();
+
+    function updateHiScoreDisplay() {
+        hiScoreEl.innerText = `HI: ${hiScore.toString().padStart(4, '0')}`;
+    }
+
+    function resetHiScore() {
+        if (confirm("Czy na pewno chcesz zresetować najlepszy wynik?")) {
+            hiScore = 0;
+            localStorage.setItem('autoslalom_hi', 0);
+            updateHiScoreDisplay();
+        }
+    }
+
+    function moveLeft() { if(playerLane > 0 && gameActive) { playerLane--; player.style.left = lanes[playerLane] + 'px'; } }
+    function moveRight() { if(playerLane < 3 && gameActive) { playerLane++; player.style.left = lanes[playerLane] + 'px'; } }
+
+    window.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowLeft') moveLeft();
+        if(e.key === 'ArrowRight') moveRight();
+    });
+
+    function createCarElement() {
+        const container = document.createElement('div');
+        container.className = 'car-shape';
+        container.innerHTML = `
+            <div class="wheel w1"></div><div class="wheel w2"></div>
+            <div class="car-body"></div>
+            <div class="wheel w3"></div><div class="wheel w4"></div>
+        `;
+        return container;
+    }
+
+    function spawn(laneIdx) {
+        const el = createCarElement();
+        el.style.top = '-40px';
+        el.style.left = lanes[laneIdx] + 'px';
+        screen.appendChild(el);
+        obstacles.push({ el, lane: laneIdx, y: -40 });
+    }
+
+    function gameLoop() {
+        if(!gameActive) return;
+
+        spawnTimer++;
+        let virtualScore = score + initialDifficultyOffset;
+        let spawnRate = Math.max(20, 60 - (virtualScore / 2));
+        
+        if(spawnTimer > spawnRate) {
+            let l1 = Math.floor(Math.random() * 4);
+            spawn(l1);
+            if (virtualScore >= 100) {
+                let l2 = (l1 + 2) % 4; 
+                spawn(l2);
+            }
+            spawnTimer = 0;
+        }
+
+        for(let i = obstacles.length - 1; i >= 0; i--) {
+            let o = obstacles[i];
+            o.y += currentSpeed;
+            o.el.style.top = o.y + 'px';
+
+            // Kolizja
+            if(o.y > 155 && o.y < 205 && o.lane === playerLane) {
+                handleHit(o, i);
+                continue;
+            }
+
+            if(o.y > 220) {
+                score++;
+                if(score % 10 === 0) currentSpeed += (baseSpeed * 0.05);
+                scoreEl.innerText = score.toString().padStart(4, '0');
+                screen.removeChild(o.el);
+                obstacles.splice(i, 1);
+            }
+        }
+        requestAnimationFrame(gameLoop);
+    }
+
+    function handleHit(obstacle, index) {
+        lives--;
+        livesEl.innerText = '♥♥♥'.substring(0, lives);
+        
+        // Efekt uderzenia - BLINK i kolor
+        obstacle.el.classList.add('blink', 'hit-style');
+        player.classList.add('blink', 'hit-style');
+        
+        gameActive = false; // Pauza na moment uderzenia
+
+        setTimeout(() => {
+            if(obstacle.el.parentNode) screen.removeChild(obstacle.el);
+            obstacles.splice(index, 1);
+            player.classList.remove('blink', 'hit-style');
+            
+            if(lives <= 0) {
+                endGame();
+            } else {
+                gameActive = true;
+                gameLoop();
+            }
+        }, 800); // Czas trwania efektu "migania" po kraksie
+    }
+
+    function startGame() {
+        document.querySelectorAll('.car-shape:not(#player)').forEach(o => o.remove());
+        obstacles = [];
+        score = 0;
+        lives = 3; 
+        currentSpeed = baseSpeed + (4 * (baseSpeed * 0.05));
+        playerLane = 1;
+        gameActive = true;
+        scoreEl.innerText = '0000';
+        livesEl.innerText = '♥♥♥';
+        overlay.style.display = 'none';
+        player.style.display = 'block';
+        player.style.left = lanes[playerLane] + 'px';
+        player.classList.remove('blink', 'hit-style');
+        gameLoop();
+    }
+
+    function endGame() {
+        gameActive = false;
+        if(score > hiScore) {
+            hiScore = score;
+            localStorage.setItem('autoslalom_hi', hiScore);
+            updateHiScoreDisplay();
+        }
+        finalInfo.innerText = "WYNIK: " + score;
+        document.getElementById('status-title').innerText = "KRAKSA!";
+        overlay.style.display = 'flex';
+    }
+</script>
+</body>
+</html>

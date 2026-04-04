@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wędkarski Wyzwanie - Uwaga na Mewy!</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        canvas { background: linear-gradient(#87CEEB 40%, #1E90FF 40%, #000050 100%); border: 4px solid #fff; border-radius: 8px; cursor: crosshair; }
+        #ui { position: absolute; top: 20px; display: flex; justify-content: space-between; width: 760px; color: white; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 4px #000; pointer-events: none; z-index: 10; }
+        .screen { position: absolute; display: none; flex-direction: column; align-items: center; color: white; background: rgba(0,0,0,0.9); padding: 40px; border-radius: 20px; text-align: center; border: 2px solid #FFD700; z-index: 20; }
+        #game-over { border-color: #ff4444; }
+        button { padding: 12px 24px; font-size: 20px; cursor: pointer; background: #FFD700; border: none; border-radius: 5px; margin-top: 20px; font-weight: bold; transition: 0.2s; }
+        button:hover { background: #fff; }
+        #warning-msg { position: absolute; top: 80px; color: #ff4444; font-size: 40px; font-weight: bold; text-shadow: 2px 2px 4px #000; display: none; pointer-events: none; z-index: 10; animation: blink 0.5s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div>Ryby: <span id="score">0</span></div>
+        <div id="status-msg">Uwaga na niebo!</div>
+        <div>Czas: <span id="timer">60</span>s</div>
+    </div>
+    
+    <div id="warning-msg">Uciekaj!!!</div>
+
+    <div id="time-up" class="screen">
+        <h1>Koniec Połowu!</h1>
+        <p>Twój wynik: <span id="final-score-time">0</span> ryb</p>
+        <button onclick="location.reload()">Zagraj ponownie</button>
+    </div>
+
+    <div id="game-over" class="screen">
+        <h1 style="color: #ff4444;">TRAFIONY! 💩</h1>
+        <p>Ptak cię dopadł. Wynik: <span id="final-score-bird">0</span> ryb</p>
+        <button onclick="location.reload()">Spróbuj uciec</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreElement = document.getElementById("score");
+    const timerElement = document.getElementById("timer");
+    const warningMsg = document.getElementById("warning-msg");
+    
+    const screens = {
+        timeUp: document.getElementById("time-up"),
+        gameOver: document.getElementById("game-over")
+    };
+    const finalScores = {
+        time: document.getElementById("final-score-time"),
+        bird: document.getElementById("final-score-bird")
+    };
+
+    canvas.width = 800;
+    canvas.height = 600;
+
+    let score = 0;
+    let timeLeft = 60;
+    let gameActive = true;
+    let spawnTimer = 0; 
+    let birdTimer = 300 + Math.random() * 300; 
+    const waterLevel = canvas.height * 0.4;
+
+    const player = {
+        x: canvas.width / 2 - 40,
+        y: waterLevel - 20,
+        width: 80,
+        height: 25,
+        speed: 8,
+        hookX: canvas.width / 2,
+        hookY: waterLevel,
+        hookSpeed: 6,
+        isReelingUp: true
+    };
+
+    let fishes = [];
+    let bird = null;
+    let birdDropping = null;
+
+    const keys = {};
+    window.addEventListener("keydown", e => keys[e.code] = true);
+    window.addEventListener("keyup", e => keys[e.code] = false);
+
+    const timerInterval = setInterval(() => {
+        if (gameActive) {
+            timeLeft--;
+            timerElement.innerText = timeLeft;
+            if (timeLeft <= 0) endGame('time');
+        }
+    }, 1000);
+
+    function spawnFish() {
+        if (!gameActive) return;
+        spawnTimer--;
+        if (spawnTimer <= 0) {
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            fishes.push({
+                x: direction === 1 ? -60 : canvas.width + 60,
+                y: waterLevel + 60 + Math.random() * (canvas.height - waterLevel - 120),
+                speed: (1.5 + Math.random() * 2) * direction,
+                color: `hsl(${Math.random() * 360}, 80%, 50%)`,
+                size: 18 + Math.random() * 10,
+                active: true
+            });
+            spawnTimer = 50 + Math.random() * 100;
+        }
+    }
+
+    function handleBird() {
+        if (!gameActive) return;
+        birdTimer--;
+
+        if (birdTimer <= 0 && !bird) {
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            bird = {
+                x: direction === 1 ? -50 : canvas.width + 50,
+                y: 30 + Math.random() * 50,
+                speed: (3 + Math.random() * 2) * direction,
+                width: 40,
+                height: 20,
+                hasDropped: false,
+                warningFrame: 0
+            };
+        }
+
+        if (bird) {
+            bird.x += bird.speed;
+            bird.warningFrame++;
+
+            if (!bird.hasDropped && !birdDropping && Math.abs(bird.x - (player.x + player.width/2)) < 50) {
+                if (Math.random() < 0.05) { 
+                    birdDropping = {
+                        x: bird.x,
+                        y: bird.y + 10,
+                        speed: 5,
+                        size: 8
+                    };
+                    bird.hasDropped = true;
+                    warningMsg.style.display = "block";
+                    setTimeout(() => warningMsg.style.display = "none", 1500);
+                }
+            }
+
+            if (bird.x < -100 || bird.x > canvas.width + 100) {
+                bird = null;
+                birdTimer = 300 + Math.random() * 400; 
+            }
+        }
+
+        if (birdDropping) {
+            birdDropping.y += birdDropping.speed;
+            if (birdDropping.y > player.y && birdDropping.y < player.y + player.height &&
+                birdDropping.x > player.x && birdDropping.x < player.x + player.width) {
+                endGame('bird');
+                birdDropping = null;
+                return;
+            }
+            if (birdDropping.y > waterLevel) {
+                setTimeout(()=> birdDropping = null, 100);
+                birdDropping.speed = 0;
+                birdDropping.y = waterLevel + 5;
+            }
+        }
+    }
+
+    function endGame(reason) {
+        gameActive = false;
+        if (reason === 'time') {
+            screens.timeUp.style.display = "flex";
+            finalScores.time.innerText = score;
+        } else if (reason === 'bird') {
+            screens.gameOver.style.display = "flex";
+            finalScores.bird.innerText = score;
+            warningMsg.style.display = "none";
+        }
+    }
+
+    function update() {
+        if (!gameActive) return;
+        if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+        if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += player.speed;
+
+        const isPressingDown = keys["ArrowDown"] || keys["Space"];
+        if (isPressingDown && player.hookY < canvas.height - 30) {
+            player.isReelingUp = false;
+            player.hookY += player.hookSpeed;
+        } else {
+            player.isReelingUp = true;
+        }
+        if (player.isReelingUp && player.hookY > waterLevel) player.hookY -= player.hookSpeed;
+
+        player.hookX += (player.x + player.width / 2 - player.hookX) * 0.15;
+
+        fishes.forEach((fish, index) => {
+            fish.x += fish.speed;
+            if (fish.active) {
+                const dx = player.hookX - fish.x;
+                const dy = player.hookY - fish.y;
+                if (Math.sqrt(dx * dx + dy * dy) < 22) {
+                    fish.active = false; score++; scoreElement.innerText = score; player.isReelingUp = true; 
+                }
+            }
+            if (fish.x < -150 || fish.x > canvas.width + 150) fishes.splice(index, 1);
+        });
+
+        spawnFish();
+        handleBird();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Ryby
+        fishes.forEach(fish => {
+            if (!fish.active) return;
+            ctx.save();
+            ctx.translate(fish.x, fish.y);
+            
+            const direction = fish.speed > 0 ? 1 : -1;
+
+            // Płetwa ogonowa (Trójkąt)
+            ctx.fillStyle = fish.color;
+            ctx.beginPath();
+            ctx.moveTo(-fish.size * direction, 0);
+            ctx.lineTo(-fish.size * 1.5 * direction, -fish.size * 0.5);
+            ctx.lineTo(-fish.size * 1.5 * direction, fish.size * 0.5);
+            ctx.closePath();
+            ctx.fill();
+
+            // Korpus (Elipsa)
+            ctx.beginPath();
+            ctx.ellipse(0, 0, fish.size, fish.size/2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Oko (Białe z czarną źrenicą)
+            const eyeX = fish.size * 0.5 * direction;
+            const eyeY = -fish.size * 0.15;
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(eyeX, eyeY, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "black";
+            ctx.beginPath();
+            ctx.arc(eyeX + (1 * direction), eyeY, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        });
+
+        // Ptak (Mewa)
+        if (bird) {
+            ctx.fillStyle = (bird.hasDropped || bird.warningFrame % 15 > 7) ? "white" : "#ff4444";
+            ctx.beginPath();
+            const d = bird.speed > 0 ? 1 : -1;
+            ctx.moveTo(bird.x, bird.y);
+            ctx.lineTo(bird.x - 15*d, bird.y - 10);
+            ctx.lineTo(bird.x - 25*d, bird.y + 5);
+            ctx.lineTo(bird.x, bird.y + 5);
+            ctx.fill();
+            ctx.beginPath(); ctx.arc(bird.x + 5*d, bird.y, 5, 0, Math.PI*2); ctx.fill();
+        }
+
+        // Zrzut
+        if (birdDropping) {
+            if (birdDropping.speed > 0) {
+                ctx.fillStyle = "#6D4C41";
+                ctx.beginPath(); ctx.arc(birdDropping.x, birdDropping.y, birdDropping.size, 0, Math.PI*2); ctx.fill();
+            } else {
+                ctx.strokeStyle = "white"; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(birdDropping.x, birdDropping.y, 15, Math.PI, 0); ctx.stroke();
+            }
+        }
+
+        // Żyłka i Haczyk
+        ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(player.x + player.width / 2, player.y + 5); ctx.lineTo(player.hookX, player.hookY); ctx.stroke();
+        ctx.strokeStyle = "#ccc"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(player.hookX, player.hookY, 7, 0.2 * Math.PI, 0.9 * Math.PI); ctx.stroke();
+
+        // Łódka
+        ctx.fillStyle = "#4E342E"; ctx.beginPath(); ctx.moveTo(player.x, player.y); ctx.lineTo(player.x + player.width, player.y); ctx.lineTo(player.x + player.width - 12, player.y + 22); ctx.lineTo(player.x + 12, player.y + 22); ctx.closePath(); ctx.fill();
+
+        // Rybak
+        ctx.fillStyle = "#FFCCBC"; ctx.beginPath(); ctx.arc(player.x + 40, player.y - 15, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "yellow"; ctx.fillRect(player.x + 32, player.y - 23, 16, 4); 
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+</script>
+</body>
+</html>
